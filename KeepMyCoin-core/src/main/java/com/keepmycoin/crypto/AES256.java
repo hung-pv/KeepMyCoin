@@ -17,15 +17,15 @@ import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
 
-import com.keepmycoin.StringUtil;
+import com.keepmycoin.utils.KMCStringUtil;
 
 public class AES256 {
 	public static byte[] encrypt(byte[] data, byte[] key, String iv) {
-		return process(data, key, StringUtil.getBytes(iv, 16), true);
+		return process(data, key, KMCStringUtil.getBytes(iv, 16), true);
 	}
 
 	public static byte[] decrypt(byte[] data, byte[] key, String iv) {
-		return process(data, key, StringUtil.getBytes(iv, 16), false);
+		return process(data, key, KMCStringUtil.getBytes(iv, 16), false);
 	}
 
 	private static byte[] process(byte[] data, byte[] key, byte[] iv, boolean isEncrypt) {
@@ -49,7 +49,7 @@ public class AES256 {
 
 	public AES256(byte[] key, String iv) {
 		this.key = key;
-		this.iv = StringUtil.getBytes(iv, 16);
+		this.iv = KMCStringUtil.getBytes(iv, 16);
 	}
 	
 	public byte[] encrypt(byte[] data) {

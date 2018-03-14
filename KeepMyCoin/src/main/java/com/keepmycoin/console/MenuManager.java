@@ -1,4 +1,4 @@
-package com.keepmycoin.console.menu;
+package com.keepmycoin.console;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,17 +6,13 @@ import java.util.List;
 public class MenuManager {
 
 	private List<Option> options = new ArrayList<>();
-	
+
 	public void add(Option option) {
 		this.options.add(option);
 	}
 	
 	public void add(String displayText, String processMethod) {
-		this.add(displayText, processMethod, false);
-	}
-	
-	public void add(String displayText, String processMethod, boolean requireKeystore) {
-		this.options.add(new Option(displayText, processMethod, requireKeystore));
+		this.options.add(new Option(displayText, processMethod));
 	}
 	
 	public void showOptionList(String header) {
@@ -29,5 +25,9 @@ public class MenuManager {
 	
 	public Option getOptionBySelection(int selected) {
 		return this.options.get(selected - 1);
+	}
+	
+	public int countMenus() {
+		return this.options.size();
 	}
 }

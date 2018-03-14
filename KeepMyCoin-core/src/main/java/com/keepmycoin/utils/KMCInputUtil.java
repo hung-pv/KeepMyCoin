@@ -1,4 +1,4 @@
-package com.keepmycoin;
+package com.keepmycoin.utils;
 
 import java.io.Console;
 import java.util.Scanner;
@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
-public class InputUtils {
+public class KMCInputUtil {
 
 	private static final Console csl = System.console();
 	private static final Scanner in = new Scanner(System.in);
@@ -55,7 +55,7 @@ public class InputUtils {
 			return null;
 		return input;
 	}
-
+	
 	public static String getPassword_required(String msg, int min_length) {
 		String pwd = getPassword(msg);
 		while (true) {
@@ -76,6 +76,15 @@ public class InputUtils {
 			pwd = pwd.substring(0, 16);
 		}
 		return pwd;
+	}
+	
+	public static void requireConfirmation(String originalText) {
+		while(true) {
+			String confirm = getRawInput("Confirm: ");
+			if (originalText == null && StringUtils.isEmpty(confirm)) return;
+			if (originalText.equals(confirm)) return;
+			o("Mismatch!");
+		}
 	}
 
 	public static int getInt(String ask) {
@@ -131,27 +140,11 @@ public class InputUtils {
 		return (RC) input;
 	}
 
-	/*-
-	public static void pressAnyKeyToContinue(String... args) {
-		for (String arg : args) {
-			o(arg);
-		}
-		if (args.length == 0) {
-			o("Press any key to continue...");
-		}
-		try {
-			System.in.read();
-		} catch (Exception e) {
-		}
-	}
-	*/
-
 	private static void o(String pattern, Object... params) {
 		System.out.println(String.format(pattern, params));
 	}
-
-	@SuppressWarnings("unused")
-	private static void e(String pattern, Object... params) {
-		System.err.println(String.format(pattern, params));
+	
+	public static interface IConvert<TC> {
+		TC convert(String input);
 	}
 }

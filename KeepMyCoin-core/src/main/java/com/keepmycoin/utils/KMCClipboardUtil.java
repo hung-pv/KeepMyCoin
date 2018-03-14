@@ -1,9 +1,9 @@
-package com.keepmycoin.io;
+package com.keepmycoin.utils;
 
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 
-public class ClipboardUtils {
+public class KMCClipboardUtil {
 
 	public static void setText(String text, String name) {
 		if (text == null) {

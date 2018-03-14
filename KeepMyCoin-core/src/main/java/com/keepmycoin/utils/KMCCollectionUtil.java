@@ -1,11 +1,11 @@
-package com.keepmycoin;
+package com.keepmycoin.utils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public class CollectionUtils {
+public class KMCCollectionUtil {
 	public static byte[] merge(Collection<byte[]> collection, int size) {
 		byte[] arr = new byte[size];
 		int pointer = 0;

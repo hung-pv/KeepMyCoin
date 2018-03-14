@@ -4,14 +4,14 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-import com.keepmycoin.StringUtil;
+import com.keepmycoin.utils.KMCStringUtil;
 
 public class AES128 {
 	private static final String AES_SPEC = "AES/CBC/PKCS5Padding";
 	private static final String AES = "AES";
 
 	public static byte[] encrypt(byte[] data, String key) {
-		return encrypt(data, StringUtil.getBytes(key, 16));
+		return encrypt(data, KMCStringUtil.getBytes(key, 16));
 	}
 
 	public static byte[] encrypt(byte[] data, byte[] key) {
@@ -26,7 +26,7 @@ public class AES128 {
 	}
 
 	public static byte[] decrypt(byte[] data, String key) {
-		return decrypt(data, StringUtil.getBytes(key, 16));
+		return decrypt(data, KMCStringUtil.getBytes(key, 16));
 	}
 
 	public static byte[] decrypt(byte[] cipherText, byte[] key) {

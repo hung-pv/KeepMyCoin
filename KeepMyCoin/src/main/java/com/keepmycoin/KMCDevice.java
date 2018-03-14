@@ -5,13 +5,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.Base64;
 
-public class MegDevice {
+public class KMCDevice {
 
-	public static final String ID_FILE_NAME = new String(Base64.getDecoder().decode("dXNiLjR1dGg="), StandardCharsets.UTF_8);
+	public static final String ID_FILE_NAME = new String(Base64.getDecoder().decode("ZGV2aWNlLmF1dGg="), StandardCharsets.UTF_8);
 	
 	private File drive;
 
-	public MegDevice(File drive) {
+	public KMCDevice(File drive) {
 		this.drive = drive;
 	}
 	

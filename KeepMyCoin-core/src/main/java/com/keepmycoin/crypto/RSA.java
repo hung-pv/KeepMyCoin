@@ -12,7 +12,7 @@ import java.util.List;
 
 import javax.crypto.Cipher;
 
-import com.keepmycoin.CollectionUtils;
+import com.keepmycoin.utils.KMCCollectionUtil;
 
 public class RSA {
 	private static final String RSA_SPEC = "RSA/ECB/PKCS1Padding";
@@ -52,7 +52,7 @@ public class RSA {
 	}
 
 	public static byte[] encryptRSA(byte[] src) throws Exception {
-		List<byte[]> spl = CollectionUtils.split(src, RSA_MAX_SRC_SZ);
+		List<byte[]> spl = KMCCollectionUtil.split(src, RSA_MAX_SRC_SZ);
 		List<byte[]> encryptedL = new ArrayList<>();
 
 		int totalSize = 0;
@@ -67,11 +67,11 @@ public class RSA {
 				encryptedL.add(encrypted);
 			}
 		}
-		return CollectionUtils.merge(encryptedL, totalSize);
+		return KMCCollectionUtil.merge(encryptedL, totalSize);
 	}
 
 	public static byte[] decryptRSA(byte[] src) throws Exception {
-		List<byte[]> blocks = CollectionUtils.split(src, RSA_ENCRYPTED_LENGTH);
+		List<byte[]> blocks = KMCCollectionUtil.split(src, RSA_ENCRYPTED_LENGTH);
 		List<byte[]> decryptedL = new ArrayList<>();
 		int totalSize = 0;
 		synchronized (cipherDecrypt) {
@@ -86,7 +86,7 @@ public class RSA {
 				}
 			}
 		}
-		return CollectionUtils.merge(decryptedL, totalSize);
+		return KMCCollectionUtil.merge(decryptedL, totalSize);
 	}
 
 	public static PublicKey convertPublicKey(byte[] data) throws Exception {
