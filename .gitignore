@@ -31,3 +31,6 @@ hs_err_pid*
 
 # Jrebel
 rebel.xml
+
+kmc.jar
+*.kmc

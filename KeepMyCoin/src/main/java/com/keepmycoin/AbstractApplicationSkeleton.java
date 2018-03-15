@@ -5,9 +5,9 @@ import java.io.File;
 import org.apache.commons.io.FileUtils;
 
 import com.bitsofproof.supernode.wallet.BIP39;
-import com.keepmycoin.KeystoreManager.KeystoreContent;
 import com.keepmycoin.crypto.AES128;
 import com.keepmycoin.crypto.AES256;
+import com.keepmycoin.data.KeyStore;
 import com.keepmycoin.utils.KMCArrayUtil;
 import com.keepmycoin.utils.KMCClipboardUtil;
 import com.keepmycoin.utils.KMCStringUtil;
@@ -98,17 +98,20 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 				"LOSING THESE WORDS, YOU CAN NOT RESTORE YOUR PRIVATE KEY", mnemonic.split("\\s").length, mnemonic);
 		KMCClipboardUtil.setText(mnemonic, "Mnemonic");
 
-		generateNewKeystore_confirmMnemonic(mnemonic, keyWithBIP39Encode, key, pwd);
+		generateNewKeystore_confirmSavedMnemonic(mnemonic, keyWithBIP39Encode, key, pwd);
 	}
+
+	protected abstract void generateNewKeystore_confirmSavedMnemonic(String mnemonic, byte[] keyWithBIP39Encode, byte[] key, String pwd) throws Exception;
 
 	protected abstract void generateNewKeystore_confirmMnemonic(String mnemonic, byte[] keyWithBIP39Encode, byte[] key, String pwd) throws Exception;
 
 	protected void generateNewKeystore_save(String mnemonic, byte[] keyWithBIP39Encode, byte[] key, String pwd) throws Exception {
 		log.trace("generateNewKeystore_save");
 		// Write file
-		KeystoreContent keystore = new KeystoreContent();
-		keystore.setEncryptedKey(keyWithBIP39Encode);
-		KeystoreManager.save(keystore);
+		KeyStore ks = new KeyStore();
+		ks.addAdditionalInformation();
+		ks.setEncryptedKeyBuffer(keyWithBIP39Encode);
+		KeystoreManager.save(ks);
 
 		showMsg("Keystore created successfully");
 

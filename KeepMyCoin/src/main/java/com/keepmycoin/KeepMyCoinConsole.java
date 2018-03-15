@@ -10,6 +10,7 @@ import org.apache.commons.lang3.SystemUtils;
 
 import com.keepmycoin.console.MenuManager;
 import com.keepmycoin.exception.OSNotImplementedException;
+import com.keepmycoin.utils.KMCClipboardUtil;
 import com.keepmycoin.utils.KMCFileUtil;
 import com.keepmycoin.utils.KMCInputUtil;
 
@@ -179,6 +180,18 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 	@Override
 	protected void showMsg(String format, Object... args) {
 		System.out.println(String.format(format, args));
+	}
+
+	@Override
+	protected void generateNewKeystore_confirmSavedMnemonic(String mnemonic, byte[] keyWithBIP39Encode, byte[] key,
+			String pwd) throws Exception {
+		while (!KMCInputUtil.confirm("Did you saved the mnemonic to somewhere?")) {
+			showMsg("Please carefully save it!");
+		}
+		if (!Configuration.DEBUG) {
+			KMCClipboardUtil.clear();	
+		}
+		generateNewKeystore_confirmMnemonic(mnemonic, keyWithBIP39Encode, key, pwd);
 	}
 
 	@Override

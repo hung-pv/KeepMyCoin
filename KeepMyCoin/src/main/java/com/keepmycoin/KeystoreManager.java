@@ -2,10 +2,12 @@ package com.keepmycoin;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+
+import com.keepmycoin.data.KeyStore;
+import com.keepmycoin.utils.JsonUtil;
 
 public class KeystoreManager {
 	
@@ -19,51 +21,16 @@ public class KeystoreManager {
 		return FILE_AES_KEYSTORE.exists();
 	}
 	
-	public static void save(KeystoreContent keystore) throws Exception {
-		//TODO impl
+	public static void save(KeyStore ks) throws Exception {
+		FileUtils.write(FILE_AES_KEYSTORE, JsonUtil.toJSon(ks), StandardCharsets.UTF_8);
 	}
 
 	public static byte[] getEncryptedKey() throws Exception {
-		List<String> lines = FileUtils.readLines(FILE_AES_KEYSTORE, StandardCharsets.UTF_8);
-		if (lines.size() < 2) {
+		String content = FileUtils.readFileToString(FILE_AES_KEYSTORE, StandardCharsets.UTF_8);
+		if (StringUtils.isBlank(content)) {
 			return null;
 		}
-		KeystoreContent keystore = new KeystoreContent();
-		keystore.setEncryptedKey(lines.get(1));
-		return keystore.getEncryptedKey();
-	}
-	
-	public static class KeystoreContent {
-		private String additionalInformation;
-		private byte[] encryptedKey;
-		
-		public String getAdditionalInformation() {
-			return additionalInformation;
-		}
-		
-		public void setAdditionalInformation(String additionalInformation) {
-			this.additionalInformation = additionalInformation;
-		}
-		
-		public byte[] getEncryptedKey() {
-			return encryptedKey;
-		}
-		
-		public void setEncryptedKey(byte[] encryptedKey) {
-			this.encryptedKey = encryptedKey;
-		}
-		
-		public void setEncryptedKey(String base64) {
-			this.encryptedKey = Base64.getDecoder().decode(base64);
-		}
-		
-		@Override
-		public String toString() {
-			StringBuilder sb = new StringBuilder();
-			sb.append(this.additionalInformation == null ? "" : this.additionalInformation);
-			sb.append('\n');
-			sb.append(Base64.getEncoder().encodeToString(this.encryptedKey));
-			return sb.toString();
-		}
+		KeyStore ks = JsonUtil.parse(content, KeyStore.class);
+		return ks.getEncryptedKeyBuffer();
 	}
 }

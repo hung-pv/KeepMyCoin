@@ -4,6 +4,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Formatter;
 
 import org.apache.commons.lang3.StringUtils;
@@ -88,5 +90,10 @@ public class KMCStringUtil {
 	    URI uri = new URI(url);
 	    String domain = uri.getHost();
 	    return domain.startsWith("www.") ? domain.substring(4) : domain;
+	}
+	
+	private static final SimpleDateFormat sdf = new SimpleDateFormat("ddMMyy HH:mm:ss");
+	public static String convertDateTimeToString(Date date) {
+		return sdf.format(date);
 	}
 }
