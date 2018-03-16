@@ -10,12 +10,7 @@ public class KMCClipboardUtil {
 			text = "";
 		}
 		try {
-			Toolkit.getDefaultToolkit()
-	        .getSystemClipboard()
-	        .setContents(
-	                new StringSelection(text),
-	                null
-	        );
+			Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(text), null);
 			if (text.equals("")) {
 				System.out.println("Clipboard cleared");
 			} else if (name == null)
@@ -25,7 +20,7 @@ public class KMCClipboardUtil {
 		} catch (Exception e) {
 		}
 	}
-	
+
 	public static void clear() {
 		setText(null, null);
 	}

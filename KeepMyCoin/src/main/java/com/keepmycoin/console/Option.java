@@ -9,7 +9,7 @@ import com.keepmycoin.annotation.RequiredKeystore;
 import com.keepmycoin.utils.KMCReflectionUtil;
 
 public class Option {
-	
+
 	private static final org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger(Option.class);
 
 	private String displayText;

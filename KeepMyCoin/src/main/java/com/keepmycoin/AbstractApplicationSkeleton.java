@@ -27,9 +27,9 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 		log.trace("preLaunch");
 
 		// check KMC device
-		if (!this.dvc.isValid()) {
+		if (!dvc.isValid()) {
 			findKMCDevice();
-			if (!this.dvc.isValid()) {
+			if (!dvc.isValid()) {
 				log.info("Unable to find a valid KMC Device");
 				setupKMCDevice();
 			}
@@ -60,7 +60,7 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 			showMsg("Illegal call, keystore already exists");
 			System.exit(0);
 		}
-		File fDeviceId = this.dvc.getIdFile();
+		File fDeviceId = dvc.getIdFile();
 		if (!Configuration.DEBUG && fDeviceId.exists() && FileUtils.readFileToByteArray(fDeviceId).length > 0) {
 			showMsg("WARNING! Your USB '%s' were used by another keystore before, restoring keystore may results losting encrypted data FOREVER\n"
 					+ //
@@ -142,7 +142,7 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 		int cacheSeedWordsLength = 0;
 
 		try {
-			usbIdContentBuffer = FileUtils.readFileToByteArray(this.dvc.getIdFile());
+			usbIdContentBuffer = FileUtils.readFileToByteArray(dvc.getIdFile());
 			if (usbIdContentBuffer.length > 1) {
 				cacheSeedWordsLength = usbIdContentBuffer[0];
 				usbIdContent = new byte[usbIdContentBuffer.length - 1];
@@ -187,7 +187,7 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 			byte[] buffer = new byte[content.length + 1];
 			System.arraycopy(content, 0, buffer, 1, content.length);
 			buffer[0] = (byte) mnemonic.split("\\s").length;
-			FileUtils.writeByteArrayToFile(this.dvc.getIdFile(), buffer);
+			FileUtils.writeByteArrayToFile(dvc.getIdFile(), buffer);
 		} catch (Exception e) {
 			log.error("Error while saving checksum", e);
 		}
@@ -195,11 +195,11 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 
 	protected boolean isKeystoreExists() {
 		log.trace("isKeystoreExists");
-		if (!this.dvc.isValid())
+		if (!dvc.isValid())
 			return false;
 		if (KeystoreManager.isKeystoreFileExists())
 			return true;
-		return this.dvc.getFile(Configuration.KEYSTORE_NAME).exists();
+		return dvc.getFile(Configuration.KEYSTORE_NAME).exists();
 	}
 
 	@Override
@@ -210,7 +210,7 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 		}
 		File fKeystore = KeystoreManager.getKeystoreFile();
 		if (!fKeystore.exists()) {
-			fKeystore = this.dvc.getFile(Configuration.KEYSTORE_NAME);
+			fKeystore = dvc.getFile(Configuration.KEYSTORE_NAME);
 			if (!fKeystore.exists()) {
 				showMsg("Keystore file named '%s' does not exists", KeystoreManager.getKeystoreFile().getName());
 				System.exit(1);
@@ -218,9 +218,9 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 		}
 		loadKeystore_getPasspharse();
 	}
-	
+
 	protected abstract void loadKeystore_getPasspharse() throws Exception;
-	
+
 	protected void loadKeystore_processUsingPasspharse(String passpharse) throws Exception {
 		byte[] keyWithBIP39Encode = KeystoreManager.getEncryptedKey();
 		String mnemonic = BIP39.getMnemonic(keyWithBIP39Encode);
@@ -240,11 +240,12 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 		log.trace("saveAWallet");
 		saveAWallet_getInfo();
 	}
-	
+
 	protected abstract void saveAWallet_getInfo() throws Exception;
 
-	protected void saveAWallet_saveInfo(String address, String privateKey, WalletType walletType, String mnemonic, String publicNote, String privateNote) throws Exception {
-		
+	protected void saveAWallet_saveInfo(String address, String privateKey, WalletType walletType, String mnemonic,
+			String publicNote, String privateNote) throws Exception {
+
 		byte[] bprivateKey = KMCStringUtil.getBytesNullable(privateKey);
 		byte[] privateKeyWithAES256Encrypted = aes256Cipher.encryptNullable(bprivateKey);
 
@@ -256,10 +257,11 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 
 		// Clear clip-board
 		KMCClipboardUtil.clear();
-		
-		Wallet wallet = new Wallet(address, privateKeyWithAES256Encrypted, walletType.name(), mnemonicWithAES256Encrypted, publicNote, notePrivateWithAES256Encrypted);
+
+		Wallet wallet = new Wallet(address, privateKeyWithAES256Encrypted, walletType.name(),
+				mnemonicWithAES256Encrypted, publicNote, notePrivateWithAES256Encrypted);
 		wallet.addAdditionalInformation();
-		File file = this.dvc.getFile(String.format("%s.%s.%s", address, walletType.name(), Configuration.EXT_DEFAULT));
+		File file = dvc.getFile(String.format("%s.%s.%s", address, walletType.name(), Configuration.EXT_DEFAULT));
 		FileUtils.writeStringToFile(file, KMCJsonUtil.toJSon(wallet), StandardCharsets.UTF_8);
 
 		showMsg("Saved %s", address);
@@ -268,7 +270,7 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 	}
 
 	protected abstract void showMsg(String format, Object... args);
-	
+
 	protected void askContinueOrExit(String question) throws Exception {
 		//
 	}

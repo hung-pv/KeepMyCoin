@@ -15,16 +15,16 @@ import com.keepmycoin.utils.KMCStringUtil;
 public abstract class AbstractKMCData {
 	@JsonProperty("msgWarning")
 	private String msgWarning;
-	
+
 	@JsonProperty("kmcVersion")
 	private double kmcVersion;
-	
+
 	@JsonProperty("jvm")
 	private String jvm;
-	
+
 	@JsonProperty("creationDate")
 	private String creationDate;
-	
+
 	@JsonProperty("dataType")
 	private String dataType;
 
@@ -67,7 +67,7 @@ public abstract class AbstractKMCData {
 	public void setCreationDate(String creationDate) {
 		this.creationDate = creationDate;
 	}
-	
+
 	@JsonGetter("dataType")
 	public String getDataType() {
 		return this.dataType;

@@ -45,29 +45,31 @@ public class AES256 {
 		}
 		return Arrays.copyOfRange(buffer, 0, len);
 	}
-	
+
 	private byte[] key, iv;
 
 	public AES256(byte[] key, String iv) {
 		this.key = key;
 		this.iv = KMCStringUtil.getBytes(iv, 16);
 	}
-	
+
 	public byte[] encrypt(byte[] data) {
 		return AES256.process(data, this.key, this.iv, true);
 	}
-	
+
 	public byte[] encryptNullable(byte[] data) {
-		if (data == null) return null;
+		if (data == null)
+			return null;
 		return encrypt(data);
 	}
-	
+
 	public byte[] decrypt(byte[] data) {
 		return AES256.process(data, this.key, this.iv, false);
 	}
-	
+
 	public byte[] decryptNullable(byte[] data) {
-		if (data == null) return null;
+		if (data == null)
+			return null;
 		return decrypt(data);
 	}
 }

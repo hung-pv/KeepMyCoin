@@ -20,7 +20,7 @@ public class KeyStore extends AbstractKMCData {
 	public void setEncryptedKey(String encryptedKey) {
 		this.encryptedKey = encryptedKey;
 	}
-	
+
 	@JsonIgnore
 	public byte[] getEncryptedKeyBuffer() {
 		return this.decodeToBuffer(this.encryptedKey);

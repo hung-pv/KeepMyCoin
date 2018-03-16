@@ -5,7 +5,7 @@ import com.keepmycoin.annotation.RequiredKeystore;
 
 public interface IKeepMyCoin {
 	void launch() throws Exception;
-	
+
 	void loadKeystore() throws Exception;
 
 	@Continue

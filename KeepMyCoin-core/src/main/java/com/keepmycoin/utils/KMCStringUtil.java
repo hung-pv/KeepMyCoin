@@ -17,10 +17,11 @@ public class KMCStringUtil {
 	}
 
 	public static byte[] getBytesNullable(String text) {
-		if (text == null) return null;
+		if (text == null)
+			return null;
 		return text.getBytes(StandardCharsets.UTF_8);
 	}
-	
+
 	public static byte[] getBytes(String text, int size, Charset c) {
 		byte[] barr = text.getBytes(c);
 		byte[] key = new byte[size];
@@ -33,7 +34,7 @@ public class KMCStringUtil {
 		}
 		return key;
 	}
-	
+
 	public static void printArray(byte[] barr) {
 		try (Formatter formatter = new Formatter()) {
 			for (byte b : barr) {
@@ -44,7 +45,7 @@ public class KMCStringUtil {
 			System.out.println("ERR");
 		}
 	}
-	
+
 	public static String beautiNumber(String number) {
 		String natural, decimal;
 		if (number.contains(".")) {
@@ -54,45 +55,47 @@ public class KMCStringUtil {
 			natural = number;
 			decimal = "";
 		}
-		
+
 		char[] reverse = org.apache.commons.lang3.StringUtils.reverse(natural).toCharArray();
 		StringBuilder sb = new StringBuilder();
 		int counter = 0;
 		for (char digit : reverse) {
 			sb.append(digit);
-			if (counter%3 == 2) {
+			if (counter % 3 == 2) {
 				sb.append(',');
 			}
 			counter++;
 		}
-		
+
 		String result = org.apache.commons.lang3.StringUtils.reverse(sb.toString()) + decimal;
 		if (result.startsWith(",")) {
 			result = result.substring(1);
 		}
 		return result;
 	}
-	
+
 	public static String toPathChars(String original) {
 		return original.replaceAll("[^aA-zZ0-9_-]", "_");
 	}
-	
+
 	public static String getSimpleCheckSum(String text) {
-		if (StringUtils.isBlank(text)) return "0000";
+		if (StringUtils.isBlank(text))
+			return "0000";
 		int sum = 0;
 		for (byte b : text.getBytes(StandardCharsets.UTF_8)) {
-			sum+=b;
+			sum += b;
 		}
 		return toPathChars(String.valueOf(sum));
 	}
-	
+
 	public static String getDomainName(String url) throws URISyntaxException {
-	    URI uri = new URI(url);
-	    String domain = uri.getHost();
-	    return domain.startsWith("www.") ? domain.substring(4) : domain;
+		URI uri = new URI(url);
+		String domain = uri.getHost();
+		return domain.startsWith("www.") ? domain.substring(4) : domain;
 	}
-	
+
 	private static final SimpleDateFormat sdf = new SimpleDateFormat("ddMMyy HH:mm:ss");
+
 	public static String convertDateTimeToString(Date date) {
 		return sdf.format(date);
 	}

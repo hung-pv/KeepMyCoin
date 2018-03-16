@@ -14,9 +14,9 @@ import com.keepmycoin.Configuration;
 import com.keepmycoin.data.AbstractKMCData;
 
 public class KMCFileUtil<T> {
-	
+
 	private static final org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger(KMCFileUtil.class);
-	
+
 	public static List<File> getFileRoots() {
 		if (!Configuration.DEBUG)
 			return Arrays.asList(File.listRoots());
@@ -50,12 +50,14 @@ public class KMCFileUtil<T> {
 	private static String[] candidateClassNames = new String[] { "KeyStore", "Wallet" };
 
 	public static AbstractKMCData readFileToKMCData(File file) throws Exception {
-		if (file == null) return null;
+		if (file == null)
+			return null;
 		String content = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
 		for (String clzName : candidateClassNames) {
 			if (content.contains(String.format("\"%s\"", clzName))) {
 				try {
-					return (AbstractKMCData)KMCJsonUtil.parse(content, Class.forName("com.keepmycoin.data." + clzName));
+					return (AbstractKMCData) KMCJsonUtil.parse(content,
+							Class.forName("com.keepmycoin.data." + clzName));
 				} catch (Exception e) {
 					log.error("Error while reading KMC data file " + file.getAbsolutePath(), e);
 				}

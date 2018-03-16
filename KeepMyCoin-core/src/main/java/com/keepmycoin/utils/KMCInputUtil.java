@@ -13,7 +13,8 @@ public class KMCInputUtil {
 
 	public static String getRawInput(String ask) {
 		if (csl == null) {
-			if (ask != null) o(ask);
+			if (ask != null)
+				o(ask);
 			return StringUtils.trimToEmpty(in.nextLine());
 		}
 		return ask == null ? csl.readLine() : csl.readLine(ask);
@@ -24,7 +25,8 @@ public class KMCInputUtil {
 		if (csl != null) {
 			input = ask == null ? csl.readLine() : csl.readLine(ask);
 		} else {
-			if (ask != null) o(ask);
+			if (ask != null)
+				o(ask);
 			input = in.nextLine();
 		}
 		if (input != null) {
@@ -49,13 +51,13 @@ public class KMCInputUtil {
 			char[] cinput = msg == null ? csl.readPassword() : csl.readPassword(msg);
 			if (cinput == null)
 				return null;
-			input = String.valueOf(cinput);			
+			input = String.valueOf(cinput);
 		}
 		if (StringUtils.isBlank(input))
 			return null;
 		return input;
 	}
-	
+
 	public static String getPassword_required(String msg, int min_length) {
 		String pwd = getPassword(msg);
 		while (true) {
@@ -77,7 +79,7 @@ public class KMCInputUtil {
 		}
 		return pwd;
 	}
-	
+
 	/*-
 	public static String getMnemonic(String msg) {
 		String mnemonic = StringUtils.trimToNull(KMCInputUtil.getRawInput(null));
@@ -104,12 +106,14 @@ public class KMCInputUtil {
 		return mnemonic;
 	}
 	*/
-	
+
 	public static void requireConfirmation(String originalText) {
-		while(true) {
+		while (true) {
 			String confirm = getRawInput("Confirm: ");
-			if (originalText == null && StringUtils.isEmpty(confirm)) return;
-			if (originalText.equals(confirm)) return;
+			if (originalText == null && StringUtils.isEmpty(confirm))
+				return;
+			if (originalText.equals(confirm))
+				return;
 			o("Mismatch!");
 		}
 	}
@@ -170,7 +174,7 @@ public class KMCInputUtil {
 	private static void o(String pattern, Object... params) {
 		System.out.println(String.format(pattern, params));
 	}
-	
+
 	public static interface IConvert<TC> {
 		TC convert(String input);
 	}

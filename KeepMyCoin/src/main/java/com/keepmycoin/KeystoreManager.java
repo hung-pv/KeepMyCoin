@@ -10,7 +10,7 @@ import com.keepmycoin.data.KeyStore;
 import com.keepmycoin.utils.KMCJsonUtil;
 
 public class KeystoreManager {
-	
+
 	private static final File FILE_AES_KEYSTORE = new File(Configuration.KEYSTORE_NAME);
 
 	public static File getKeystoreFile() {
@@ -20,7 +20,7 @@ public class KeystoreManager {
 	public static boolean isKeystoreFileExists() {
 		return FILE_AES_KEYSTORE.exists();
 	}
-	
+
 	public static void save(byte[] keyWithBIP39Encode) throws Exception {
 		KeyStore ks = new KeyStore();
 		ks.addAdditionalInformation();

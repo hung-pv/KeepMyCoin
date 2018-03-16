@@ -18,7 +18,7 @@ import com.keepmycoin.utils.KMCInputUtil;
 import com.keepmycoin.utils.Validator;
 
 public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
-	
+
 	private static final org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger(KeepMyCoinConsole.class);
 
 	@Override
@@ -95,7 +95,8 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		showMsg(" ... Press Enter to continue ...");
 		KMCInputUtil.getRawInput(null);
 
-		List<File> fValidRoots = KMCFileUtil.getFileRoots().stream().filter(r -> r.listFiles().length == 0).collect(Collectors.toList());
+		List<File> fValidRoots = KMCFileUtil.getFileRoots().stream().filter(r -> r.listFiles().length == 0)
+				.collect(Collectors.toList());
 		if (fValidRoots.isEmpty()) {
 			showMsg("There is no USB device meet conditions, please check again");
 			showMsg("Make sure it is completely EMPTY");
@@ -145,14 +146,14 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 	protected void launchMenu() throws Exception {
 		log.trace("launchMenu");
 		MenuManager mm = new MenuManager();
-		
+
 		if (!isKeystoreExists()) {
 			mm.add("Generate keystore", "generateNewKeystore");
 			mm.add("Restore keystore", "restoreKeystore");
 		} else {
 			mm.add("Save a wallet", "saveAWallet");
 		}
-		
+
 		mm.showOptionList("\n==========\n\nHello! Today is a beautiful day, what do want to do?");
 		int selection = getMenuSelection();
 		if (!validateMenuSelection(selection, mm)) {
@@ -179,7 +180,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 			showMsg("Please carefully save it!");
 		}
 		if (!Configuration.DEBUG) {
-			KMCClipboardUtil.clear();	
+			KMCClipboardUtil.clear();
 		}
 		generateNewKeystore_confirmMnemonic(mnemonic, keyWithBIP39Encode, key, pwd);
 	}
@@ -217,7 +218,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 			showMsg("Cancelled");
 			return;
 		}
-		
+
 		restoreKeystore_processUsingInput(mnemonic, pwd);
 	}
 
@@ -236,7 +237,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 			mm.add(wt.getDisplayText(), null);
 		}
 		int selection;
-		while(true) {
+		while (true) {
 			mm.showOptionList("Select wallet type:");
 			selection = getMenuSelection();
 			if (selection < 1 || selection > WalletType.values().length) {
@@ -295,7 +296,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		showMsg("PUBLIC note - this content can NOT be changed later (optional, will not be encrypted so should not contains private information):");
 		showMsg("(press Enter to skip)");
 		String publicNote = StringUtils.trimToNull(KMCInputUtil.getRawInput(null));
-		
+
 		saveAWallet_saveInfo(address, privateKey, wt, mnemonic, publicNote, privateNote);
 	}
 
@@ -310,7 +311,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 			return 0;
 		}
 	}
-	
+
 	private boolean validateMenuSelection(int option, MenuManager mm) {
 		return option < 1 ? false : option <= mm.countMenus();
 	}

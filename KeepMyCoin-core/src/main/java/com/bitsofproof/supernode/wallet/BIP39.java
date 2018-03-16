@@ -65,8 +65,8 @@ public class BIP39 {
 			for (i = 0; i < 1000; ++i) {
 				data = cipher.doFinal(data);
 			}
-		} catch (NoSuchAlgorithmException | NoSuchProviderException
-				| NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+		} catch (NoSuchAlgorithmException | NoSuchProviderException | NoSuchPaddingException | InvalidKeyException
+				| IllegalBlockSizeException | BadPaddingException e) {
 			throw new ValidationException("can not decrypt mnemonic", e);
 		}
 		return data;
@@ -83,8 +83,8 @@ public class BIP39 {
 			for (int i = 0; i < 1000; ++i) {
 				data = cipher.doFinal(data);
 			}
-		} catch (NoSuchAlgorithmException | NoSuchProviderException
-				| NoSuchPaddingException | InvalidKeyException | IllegalBlockSizeException | BadPaddingException e) {
+		} catch (NoSuchAlgorithmException | NoSuchProviderException | NoSuchPaddingException | InvalidKeyException
+				| IllegalBlockSizeException | BadPaddingException e) {
 			throw new ValidationException("can not encrypt mnemonic", e);
 		}
 		return data;
