@@ -8,8 +8,11 @@ import org.apache.commons.io.FileUtils;
 import com.bitsofproof.supernode.wallet.BIP39;
 import com.keepmycoin.crypto.AES128;
 import com.keepmycoin.crypto.AES256;
+import com.keepmycoin.data.Wallet;
+import com.keepmycoin.exception.CryptoException;
 import com.keepmycoin.utils.KMCArrayUtil;
 import com.keepmycoin.utils.KMCClipboardUtil;
+import com.keepmycoin.utils.KMCJsonUtil;
 import com.keepmycoin.utils.KMCStringUtil;
 
 public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
@@ -18,6 +21,7 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 			.getLogger(AbstractApplicationSkeleton.class);
 
 	protected KMCDevice dvc = new KMCDevice(Configuration.KMC_FOLDER);
+	protected AES256 aes256Cipher = null;
 
 	protected void preLaunch() throws Exception {
 		log.trace("preLaunch");
@@ -67,13 +71,13 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 			System.exit(0);
 			return;
 		}
-		generateNewKeystore_getInitPwd();
+		generateNewKeystore_getInitPassPharse();
 	}
 
-	protected abstract void generateNewKeystore_getInitPwd() throws Exception;
+	protected abstract void generateNewKeystore_getInitPassPharse() throws Exception;
 
-	protected void generateNewKeystore_fromInitPwd(String pwd) throws Exception {
-		log.trace("generateNewKeystore_fromInitPwd");
+	protected void generateNewKeystore_fromInitPassPharse(String pwd) throws Exception {
+		log.trace("generateNewKeystore_fromInitPassPharse");
 		// Gen key
 		byte[] key = KMCArrayUtil.randomBytes(32);
 		byte[] keyWithAES128 = AES128.encrypt(key, pwd);
@@ -201,12 +205,71 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 	@Override
 	public void loadKeystore() throws Exception {
 		log.trace("loadKeystore");
+		if (aes256Cipher != null) {
+			return;
+		}
+		File fKeystore = KeystoreManager.getKeystoreFile();
+		if (!fKeystore.exists()) {
+			fKeystore = this.dvc.getFile(Configuration.KEYSTORE_NAME);
+			if (!fKeystore.exists()) {
+				showMsg("Keystore file named '%s' does not exists", KeystoreManager.getKeystoreFile().getName());
+				System.exit(1);
+			}
+		}
+		loadKeystore_getPasspharse();
+	}
+	
+	protected abstract void loadKeystore_getPasspharse() throws Exception;
+	
+	protected void loadKeystore_processUsingPasspharse(String passpharse) throws Exception {
+		byte[] keyWithBIP39Encode = KeystoreManager.getEncryptedKey();
+		String mnemonic = BIP39.getMnemonic(keyWithBIP39Encode);
+		byte[] keyWithAES128 = BIP39.decode(mnemonic, passpharse);
+		byte[] key = null;
+		try {
+			key = AES128.decrypt(keyWithAES128, passpharse);
+		} catch (CryptoException e) {
+			showMsg("Incorrect passphrase");
+			System.exit(1);
+		}
+		aes256Cipher = new AES256(key, passpharse);
 	}
 
 	@Override
 	public void saveAWallet() throws Exception {
 		log.trace("saveAWallet");
+		saveAWallet_getInfo();
+	}
+	
+	protected abstract void saveAWallet_getInfo() throws Exception;
+
+	protected void saveAWallet_saveInfo(String address, String privateKey, WalletType walletType, String mnemonic, String publicNote, String privateNote) throws Exception {
+		
+		byte[] bprivateKey = KMCStringUtil.getBytesNullable(privateKey);
+		byte[] privateKeyWithAES256Encrypted = aes256Cipher.encryptNullable(bprivateKey);
+
+		byte[] bmnemonic = KMCStringUtil.getBytesNullable(mnemonic);
+		byte[] mnemonicWithAES256Encrypted = aes256Cipher.encryptNullable(bmnemonic);
+
+		byte[] bnotePrivate = KMCStringUtil.getBytesNullable(privateNote);
+		byte[] notePrivateWithAES256Encrypted = aes256Cipher.encryptNullable(bnotePrivate);
+
+		// Clear clip-board
+		KMCClipboardUtil.clear();
+		
+		Wallet wallet = new Wallet(address, privateKeyWithAES256Encrypted, walletType.name(), mnemonicWithAES256Encrypted, publicNote, notePrivateWithAES256Encrypted);
+		wallet.addAdditionalInformation();
+		File file = this.dvc.getFile(String.format("%s.%s.%s", address, walletType.name(), Configuration.EXT_DEFAULT));
+		FileUtils.writeStringToFile(file, KMCJsonUtil.toJSon(wallet), StandardCharsets.UTF_8);
+
+		showMsg("Saved %s", address);
+
+		askContinueOrExit(null);
 	}
 
 	protected abstract void showMsg(String format, Object... args);
+	
+	protected void askContinueOrExit(String question) throws Exception {
+		//
+	}
 }

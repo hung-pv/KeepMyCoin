@@ -1,4 +1,4 @@
-package com.keepmycoin.crypto;
+package com.keepmycoin.exception;
 
 public class CryptoException extends RuntimeException {
 

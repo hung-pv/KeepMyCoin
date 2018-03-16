@@ -17,6 +17,7 @@ import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher;
 import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
 
+import com.keepmycoin.exception.CryptoException;
 import com.keepmycoin.utils.KMCStringUtil;
 
 public class AES256 {

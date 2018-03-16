@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.NotImplementedException;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 
 import com.keepmycoin.console.MenuManager;
@@ -147,6 +149,8 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		if (!isKeystoreExists()) {
 			mm.add("Generate keystore", "generateNewKeystore");
 			mm.add("Restore keystore", "restoreKeystore");
+		} else {
+			mm.add("Save a wallet", "saveAWallet");
 		}
 		
 		mm.showOptionList("\n==========\n\nHello! Today is a beautiful day, what do want to do?");
@@ -160,11 +164,11 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 	}
 
 	@Override
-	protected void generateNewKeystore_getInitPwd() throws Exception {
-		log.trace("generateNewKeystore_getInitPwd");
+	protected void generateNewKeystore_getInitPassPharse() throws Exception {
+		log.trace("generateNewKeystore_getInitPassPharse");
 		String pwd = KMCInputUtil.getPassword_required("Passphrase (up to 16 chars): ", Configuration.DEBUG ? 1 : 8);
 		KMCInputUtil.requireConfirmation(pwd);
-		generateNewKeystore_fromInitPwd(pwd);
+		generateNewKeystore_fromInitPassPharse(pwd);
 	}
 
 	@Override
@@ -217,6 +221,84 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		restoreKeystore_processUsingInput(mnemonic, pwd);
 	}
 
+	@Override
+	protected void loadKeystore_getPasspharse() throws Exception {
+		log.trace("loadKeystore_getPasspharse");
+		String pwd = KMCInputUtil.getPassword_required("Passphrase: ", 1);
+		loadKeystore_processUsingPasspharse(pwd);
+	}
+
+	@Override
+	protected void saveAWallet_getInfo() throws Exception {
+		log.trace("saveAWallet_getInfo");
+		MenuManager mm = new MenuManager();
+		for (WalletType wt : WalletType.values()) {
+			mm.add(wt.getDisplayText(), null);
+		}
+		int selection;
+		while(true) {
+			mm.showOptionList("Select wallet type:");
+			selection = getMenuSelection();
+			if (selection < 1 || selection > WalletType.values().length) {
+				showMsg("Invalid option");
+				continue;
+			}
+			break;
+		}
+
+		WalletType wt = WalletType.values()[selection - 1];
+
+		showMsg("Enter your private key (will be encrypted):");
+		showMsg("(press Enter to skip)");
+		String privateKey = StringUtils.trimToNull(KMCInputUtil.getPassword(null));
+
+		showMsg("Enter your mnemonic (will be encrypted):");
+		showMsg("(press Enter to skip)");
+		String mnemonic;
+		while (true) {
+			mnemonic = StringUtils.trimToNull(KMCInputUtil.getRawInput(null));
+			if (mnemonic == null) {
+				break;
+			}
+			if (mnemonic.split("\\s").length % 12 != 0) {
+				showMsg("Mnemonic incorrect (can not devided by 12)");
+				showMsg("Again: ");
+				continue;
+			}
+		}
+
+		if (privateKey == null && mnemonic == null) {
+			showMsg("You must provide at least one information, Private Key or Mnemonic seed words");
+			if (KMCInputUtil.confirm("Do you understand?")) {
+				showMsg("OK, now let's do again");
+				saveAWallet_getInfo();
+				return;
+			}
+			KMCClipboardUtil.clear();
+			exit();
+		}
+
+		String address;
+		showMsg("Address (required, will not be encrypted):");
+		while (true) {
+			address = KMCInputUtil.getInput(null, 68);
+			if (KMCInputUtil.confirm("You sure? Please confirm this address again!")) {
+				break;
+			}
+			showMsg("Address:");
+		}
+
+		showMsg("PRIVATE note - this content can NOT be changed later (optional, will be encrypted):");
+		showMsg("(press Enter to skip)");
+		String privateNote = StringUtils.trimToNull(KMCInputUtil.getRawInput(null));
+
+		showMsg("PUBLIC note - this content can NOT be changed later (optional, will not be encrypted so should not contains private information):");
+		showMsg("(press Enter to skip)");
+		String publicNote = StringUtils.trimToNull(KMCInputUtil.getRawInput(null));
+		
+		saveAWallet_saveInfo(address, privateKey, wt, mnemonic, publicNote, privateNote);
+	}
+
 	private int getMenuSelection() {
 		String input = KMCInputUtil.getInput("Action: ", 1);
 		if (input == null) {
@@ -238,4 +320,33 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		System.out.println(String.format(format, args));
 	}
 
+	@Override
+	protected void askContinueOrExit(String question) throws Exception {
+		log.trace("askContinueOrExit");
+		if (!KMCInputUtil.confirm(question == null ? "Continue?" : question)) {
+			exit();
+		}
+	}
+
+	private void exit() throws Exception {
+		try {
+			if (SystemUtils.IS_OS_WINDOWS) {
+				String[] cls = new String[] { "cmd.exe", "/c", "cls" };
+				Runtime.getRuntime().exec(cls);
+			} else if (SystemUtils.IS_OS_LINUX) {
+				Runtime.getRuntime().exec("clear");
+			} else {
+				throw new NotImplementedException("Clear screen for " + SystemUtils.OS_NAME);
+			}
+		} catch (Exception e) {
+			if (e instanceof NotImplementedException) {
+				throw e;
+			}
+			if (Configuration.DEBUG) {
+				e.printStackTrace();
+			}
+		}
+		showMsg("Thanks for using our production");
+		System.exit(0);
+	}
 }

@@ -8,17 +8,26 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.keepmycoin.utils.KMCClipboardUtil;
+
 public class App {
 
 	private static final org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger(App.class);
-	
+
 	public static void main(String[] args) throws Exception {
 		log.debug("App launch");
 		initialize(args);
 		log.debug("initialize done");
-		
+
+		Runtime.getRuntime().addShutdownHook(new Thread() {
+			public void run() {
+				KMCClipboardUtil.clear();
+			}
+		});
+
 		log.debug("Launch console/interface");
-		//IKeepMyCoin kmcProcessor = Configuration.MODE_CONSOLE ? new KeepMyCoinConsole() : new KeepMyCoinGUI();
+		// IKeepMyCoin kmcProcessor = Configuration.MODE_CONSOLE ? new
+		// KeepMyCoinConsole() : new KeepMyCoinGUI();
 		IKeepMyCoin kmcProcessor = new KeepMyCoinConsole();
 		kmcProcessor.launch();
 	}
@@ -33,7 +42,7 @@ public class App {
 			return;
 		Configuration.DEBUG = larg.contains("debug");
 		Configuration.MODE_CONSOLE = larg.contains("console") || larg.contains("c");
-		
+
 		File fixedKMCFolder = null;
 		if (larg.stream().anyMatch(a -> a.startsWith("kmc="))) {
 			String folder = larg.stream().filter(a -> a.startsWith("kmc=")).findAny().get().split("=")[1];

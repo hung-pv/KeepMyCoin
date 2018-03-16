@@ -47,7 +47,7 @@ public class KMCFileUtil<T> {
 		return file.getName().toLowerCase().endsWith("." + ext.toLowerCase());
 	}
 
-	private static String[] candidateClassNames = new String[] { "KeyStore" };
+	private static String[] candidateClassNames = new String[] { "KeyStore", "Wallet" };
 
 	public static AbstractKMCData readFileToKMCData(File file) throws Exception {
 		if (file == null) return null;

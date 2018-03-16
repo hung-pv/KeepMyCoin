@@ -4,6 +4,7 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+import com.keepmycoin.exception.CryptoException;
 import com.keepmycoin.utils.KMCStringUtil;
 
 public class AES128 {

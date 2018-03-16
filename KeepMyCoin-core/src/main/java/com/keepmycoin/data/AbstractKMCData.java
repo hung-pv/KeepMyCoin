@@ -1,5 +1,6 @@
 package com.keepmycoin.data;
 
+import java.util.Base64;
 import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
@@ -84,5 +85,15 @@ public abstract class AbstractKMCData {
 		this.jvm = Runtime.class.getPackage().getImplementationVersion();
 		this.creationDate = KMCStringUtil.convertDateTimeToString(new Date());
 		this.dataType = this.getClass().getSimpleName();
+	}
+
+	@JsonIgnore
+	protected String encodeBuffer(byte[] buffer) {
+		return buffer == null ? null : Base64.getEncoder().encodeToString(buffer);
+	}
+
+	@JsonIgnore
+	protected byte[] decodeToBuffer(String data) {
+		return data == null ? null : Base64.getDecoder().decode(data);
 	}
 }
