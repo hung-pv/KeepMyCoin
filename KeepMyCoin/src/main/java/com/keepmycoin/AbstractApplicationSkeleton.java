@@ -1,13 +1,13 @@
 package com.keepmycoin;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.FileUtils;
 
 import com.bitsofproof.supernode.wallet.BIP39;
 import com.keepmycoin.crypto.AES128;
 import com.keepmycoin.crypto.AES256;
-import com.keepmycoin.data.KeyStore;
 import com.keepmycoin.utils.KMCArrayUtil;
 import com.keepmycoin.utils.KMCClipboardUtil;
 import com.keepmycoin.utils.KMCStringUtil;
@@ -101,22 +101,79 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 		generateNewKeystore_confirmSavedMnemonic(mnemonic, keyWithBIP39Encode, key, pwd);
 	}
 
-	protected abstract void generateNewKeystore_confirmSavedMnemonic(String mnemonic, byte[] keyWithBIP39Encode, byte[] key, String pwd) throws Exception;
+	protected abstract void generateNewKeystore_confirmSavedMnemonic(String mnemonic, byte[] keyWithBIP39Encode,
+			byte[] key, String pwd) throws Exception;
 
-	protected abstract void generateNewKeystore_confirmMnemonic(String mnemonic, byte[] keyWithBIP39Encode, byte[] key, String pwd) throws Exception;
+	protected abstract void generateNewKeystore_confirmMnemonic(String mnemonic, byte[] keyWithBIP39Encode, byte[] key,
+			String pwd) throws Exception;
 
-	protected void generateNewKeystore_save(String mnemonic, byte[] keyWithBIP39Encode, byte[] key, String pwd) throws Exception {
+	protected void generateNewKeystore_save(String mnemonic, byte[] keyWithBIP39Encode, byte[] key, String pwd)
+			throws Exception {
 		log.trace("generateNewKeystore_save");
 		// Write file
-		KeyStore ks = new KeyStore();
-		ks.addAdditionalInformation();
-		ks.setEncryptedKeyBuffer(keyWithBIP39Encode);
-		KeystoreManager.save(ks);
+		KeystoreManager.save(keyWithBIP39Encode);
 
 		showMsg("Keystore created successfully");
 
 		// Write MEMORIZE
 		saveChecksum(mnemonic, key, pwd);
+	}
+
+	@Override
+	public void restoreKeystore() throws Exception {
+		log.trace("restoreKeystore");
+		if (isKeystoreExists()) {
+			showMsg("Illegal call, keystore already exists");
+			System.exit(0);
+		}
+		restoreKeystore_getSeedWordsAndPassPharse();
+	}
+
+	protected abstract void restoreKeystore_getSeedWordsAndPassPharse() throws Exception;
+
+	protected void restoreKeystore_processUsingInput(String mnemonic, String passPharse) throws Exception {
+		log.trace("restoreKeystore_processUsingInput");
+
+		byte[] keyWithAES128, key, keyWithBIP39Encode, usbIdContentBuffer, usbIdContent;
+		int cacheSeedWordsLength = 0;
+
+		try {
+			usbIdContentBuffer = FileUtils.readFileToByteArray(this.dvc.getIdFile());
+			if (usbIdContentBuffer.length > 1) {
+				cacheSeedWordsLength = usbIdContentBuffer[0];
+				usbIdContent = new byte[usbIdContentBuffer.length - 1];
+				System.arraycopy(usbIdContentBuffer, 1, usbIdContent, 0, usbIdContent.length);
+			} else {
+				usbIdContent = new byte[0];
+			}
+
+			keyWithAES128 = BIP39.decode(mnemonic, passPharse);
+			key = AES128.decrypt(keyWithAES128, passPharse);
+			keyWithBIP39Encode = BIP39.encode(keyWithAES128, passPharse);
+
+			if (cacheSeedWordsLength > 0) {
+				String mnemonicFromUsbID = new String(AES256.decrypt(usbIdContent, key, passPharse),
+						StandardCharsets.UTF_8);
+				if (!mnemonic.trim().equals(mnemonicFromUsbID.trim())) {
+					showMsg("Incorrect! You have to check your seed words and your passphrase then try again!\n" + //
+							"Hint: seed contains %d words", cacheSeedWordsLength);
+					restoreKeystore_getSeedWordsAndPassPharse();
+					return;
+				}
+			}
+		} catch (Exception e) {
+			showMsg("Look like something wrong, you have to check your seed words and your passphrase then try again!\n"
+					+ //
+					"Hint: seed contains %d words", cacheSeedWordsLength);
+			restoreKeystore_getSeedWordsAndPassPharse();
+			return;
+		}
+
+		KeystoreManager.save(keyWithBIP39Encode);
+		showMsg("Keystore restored successfully");
+
+		// Write MEMORIZE
+		saveChecksum(mnemonic, key, passPharse);
 	}
 
 	protected void saveChecksum(String mnemonic, byte[] key, String pwd) {

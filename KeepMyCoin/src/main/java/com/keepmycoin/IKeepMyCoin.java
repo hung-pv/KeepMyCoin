@@ -11,6 +11,9 @@ public interface IKeepMyCoin {
 	@Continue
 	void generateNewKeystore() throws Exception;
 
+	@Continue
+	void restoreKeystore() throws Exception;
+
 	@RequiredKeystore
 	@Continue
 	void saveAWallet() throws Exception;

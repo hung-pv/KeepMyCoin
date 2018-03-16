@@ -7,7 +7,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.keepmycoin.data.KeyStore;
-import com.keepmycoin.utils.JsonUtil;
+import com.keepmycoin.utils.KMCJsonUtil;
 
 public class KeystoreManager {
 	
@@ -21,8 +21,11 @@ public class KeystoreManager {
 		return FILE_AES_KEYSTORE.exists();
 	}
 	
-	public static void save(KeyStore ks) throws Exception {
-		FileUtils.write(FILE_AES_KEYSTORE, JsonUtil.toJSon(ks), StandardCharsets.UTF_8);
+	public static void save(byte[] keyWithBIP39Encode) throws Exception {
+		KeyStore ks = new KeyStore();
+		ks.addAdditionalInformation();
+		ks.setEncryptedKeyBuffer(keyWithBIP39Encode);
+		FileUtils.write(FILE_AES_KEYSTORE, KMCJsonUtil.toJSon(ks), StandardCharsets.UTF_8);
 	}
 
 	public static byte[] getEncryptedKey() throws Exception {
@@ -30,7 +33,7 @@ public class KeystoreManager {
 		if (StringUtils.isBlank(content)) {
 			return null;
 		}
-		KeyStore ks = JsonUtil.parse(content, KeyStore.class);
+		KeyStore ks = KMCJsonUtil.parse(content, KeyStore.class);
 		return ks.getEncryptedKeyBuffer();
 	}
 }

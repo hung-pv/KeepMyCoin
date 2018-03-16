@@ -13,6 +13,7 @@ import com.keepmycoin.exception.OSNotImplementedException;
 import com.keepmycoin.utils.KMCClipboardUtil;
 import com.keepmycoin.utils.KMCFileUtil;
 import com.keepmycoin.utils.KMCInputUtil;
+import com.keepmycoin.utils.Validator;
 
 public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 	
@@ -142,7 +143,12 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 	protected void launchMenu() throws Exception {
 		log.trace("launchMenu");
 		MenuManager mm = new MenuManager();
-		mm.add("Generate keystore", "generateNewKeystore");
+		
+		if (!isKeystoreExists()) {
+			mm.add("Generate keystore", "generateNewKeystore");
+			mm.add("Restore keystore", "restoreKeystore");
+		}
+		
 		mm.showOptionList("\n==========\n\nHello! Today is a beautiful day, what do want to do?");
 		int selection = getMenuSelection();
 		if (!validateMenuSelection(selection, mm)) {
@@ -159,6 +165,56 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		String pwd = KMCInputUtil.getPassword_required("Passphrase (up to 16 chars): ", Configuration.DEBUG ? 1 : 8);
 		KMCInputUtil.requireConfirmation(pwd);
 		generateNewKeystore_fromInitPwd(pwd);
+	}
+
+	@Override
+	protected void generateNewKeystore_confirmSavedMnemonic(String mnemonic, byte[] keyWithBIP39Encode, byte[] key,
+			String pwd) throws Exception {
+		log.trace("generateNewKeystore_confirmSavedMnemonic");
+		while (!KMCInputUtil.confirm("Did you saved the mnemonic to somewhere?")) {
+			showMsg("Please carefully save it!");
+		}
+		if (!Configuration.DEBUG) {
+			KMCClipboardUtil.clear();	
+		}
+		generateNewKeystore_confirmMnemonic(mnemonic, keyWithBIP39Encode, key, pwd);
+	}
+
+	@Override
+	protected void generateNewKeystore_confirmMnemonic(String mnemonic, byte[] keyWithBIP39Encode, byte[] key,
+			String pwd) throws Exception {
+		log.trace("generateNewKeystore_confirmMnemonic");
+		showMsg("For sure you already saved these seed words, you have to typing these words again:");
+		KMCInputUtil.requireConfirmation(mnemonic);
+		showMsg("Good job! Keep these seed words safe");
+		generateNewKeystore_save(mnemonic, keyWithBIP39Encode, key, pwd);
+	}
+
+	@Override
+	protected void restoreKeystore_getSeedWordsAndPassPharse() throws Exception {
+		log.trace("restoreKeystore_getSeedWordsAndPassPharse");
+		showMsg("Enter seed words:");
+		String mnemonic;
+		boolean first = true;
+		do {
+			if (first) {
+				first = false;
+			} else {
+				showMsg("Incorrect, input again or type 'cancel':");
+			}
+			mnemonic = KMCInputUtil.getRawInput(null);
+			if ("cancel".equalsIgnoreCase(mnemonic)) {
+				return;
+			}
+		} while (!Validator.isValidSeedWords(mnemonic));
+
+		String pwd = KMCInputUtil.getPassword("Passphrase: ");
+		if (pwd == null) {
+			showMsg("Cancelled");
+			return;
+		}
+		
+		restoreKeystore_processUsingInput(mnemonic, pwd);
 	}
 
 	private int getMenuSelection() {
@@ -180,27 +236,6 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 	@Override
 	protected void showMsg(String format, Object... args) {
 		System.out.println(String.format(format, args));
-	}
-
-	@Override
-	protected void generateNewKeystore_confirmSavedMnemonic(String mnemonic, byte[] keyWithBIP39Encode, byte[] key,
-			String pwd) throws Exception {
-		while (!KMCInputUtil.confirm("Did you saved the mnemonic to somewhere?")) {
-			showMsg("Please carefully save it!");
-		}
-		if (!Configuration.DEBUG) {
-			KMCClipboardUtil.clear();	
-		}
-		generateNewKeystore_confirmMnemonic(mnemonic, keyWithBIP39Encode, key, pwd);
-	}
-
-	@Override
-	protected void generateNewKeystore_confirmMnemonic(String mnemonic, byte[] keyWithBIP39Encode, byte[] key,
-			String pwd) throws Exception {
-		showMsg("For sure you already saved these seed words, you have to typing these words again:");
-		KMCInputUtil.requireConfirmation(mnemonic);
-		showMsg("Good job! Keep these seed words safe");
-		generateNewKeystore_save(mnemonic, keyWithBIP39Encode, key, pwd);
 	}
 
 }
