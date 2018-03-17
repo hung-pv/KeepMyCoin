@@ -12,7 +12,7 @@ import com.keepmycoin.data.Wallet;
 import com.keepmycoin.exception.CryptoException;
 import com.keepmycoin.utils.KMCArrayUtil;
 import com.keepmycoin.utils.KMCClipboardUtil;
-import com.keepmycoin.utils.KMCJsonUtil;
+import com.keepmycoin.utils.KMCFileUtil;
 import com.keepmycoin.utils.KMCStringUtil;
 
 public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
@@ -262,7 +262,7 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 				mnemonicWithAES256Encrypted, publicNote, notePrivateWithAES256Encrypted);
 		wallet.addAdditionalInformation();
 		File file = dvc.getFile(String.format("%s.%s.%s", address, walletType.name(), Configuration.EXT_DEFAULT));
-		FileUtils.writeStringToFile(file, KMCJsonUtil.toJSon(wallet), StandardCharsets.UTF_8);
+		KMCFileUtil.writeFile(file, wallet);
 
 		showMsg("Saved %s", address);
 

@@ -7,6 +7,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.keepmycoin.data.KeyStore;
+import com.keepmycoin.utils.KMCFileUtil;
 import com.keepmycoin.utils.KMCJsonUtil;
 
 public class KeystoreManager {
@@ -25,7 +26,7 @@ public class KeystoreManager {
 		KeyStore ks = new KeyStore();
 		ks.addAdditionalInformation();
 		ks.setEncryptedKeyBuffer(keyWithBIP39Encode);
-		FileUtils.write(FILE_AES_KEYSTORE, KMCJsonUtil.toJSon(ks), StandardCharsets.UTF_8);
+		KMCFileUtil.writeFile(FILE_AES_KEYSTORE, ks);
 	}
 
 	public static byte[] getEncryptedKey() throws Exception {

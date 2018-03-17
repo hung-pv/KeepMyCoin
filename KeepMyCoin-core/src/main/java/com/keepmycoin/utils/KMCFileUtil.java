@@ -13,7 +13,7 @@ import org.apache.commons.lang3.SystemUtils;
 import com.keepmycoin.Configuration;
 import com.keepmycoin.data.AbstractKMCData;
 
-public class KMCFileUtil<T> {
+public class KMCFileUtil {
 
 	private static final org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger(KMCFileUtil.class);
 
@@ -64,5 +64,23 @@ public class KMCFileUtil<T> {
 			}
 		}
 		return null;
+	}
+
+	public static void writeFile(File file, AbstractKMCData data) throws Exception {
+		writeFile(file, KMCJsonUtil.toJSon(data), true);
+	}
+
+	public static void writeFile(File file, String content, boolean readonly) throws Exception {
+		FileUtils.write(file, content, StandardCharsets.UTF_8);
+		if (readonly) {
+			setReadonlyQuietly(file);
+		}
+	}
+
+	public static void setReadonlyQuietly(File file) {
+		try {
+			file.setReadOnly();
+		} catch (Throwable t) {
+		}
 	}
 }
