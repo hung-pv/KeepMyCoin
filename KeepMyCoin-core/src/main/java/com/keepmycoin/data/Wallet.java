@@ -32,6 +32,16 @@ public class Wallet extends AbstractKMCData {
 		this.publicNote = publicNote;
 		setEncryptedPrivateNoteBuffer(encryptedPrivateNoteBuffer);
 	}
+	
+	public Wallet() {
+		super();
+		this.address = null;
+		this.encryptedPrivateKey = null;
+		this.walletType = null;
+		this.encryptedMnemonic = null;
+		this.publicNote = null;
+		this.encryptedPrivateNote = null;
+	}
 
 	@JsonGetter("address")
 	public String getAddress() {

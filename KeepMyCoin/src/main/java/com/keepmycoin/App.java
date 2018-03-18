@@ -8,8 +8,6 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.keepmycoin.utils.KMCClipboardUtil;
-
 public class App {
 
 	private static final org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger(App.class);
@@ -21,7 +19,7 @@ public class App {
 
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			public void run() {
-				KMCClipboardUtil.clear();
+				//KMCClipboardUtil.clear();
 			}
 		});
 

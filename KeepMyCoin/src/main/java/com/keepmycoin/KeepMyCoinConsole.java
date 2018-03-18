@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 
 import com.keepmycoin.console.MenuManager;
+import com.keepmycoin.data.Wallet;
 import com.keepmycoin.exception.OSNotImplementedException;
 import com.keepmycoin.utils.KMCClipboardUtil;
 import com.keepmycoin.utils.KMCFileUtil;
@@ -152,6 +153,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 			mm.add("Restore keystore", "restoreKeystore");
 		} else {
 			mm.add("Save a wallet", "saveAWallet");
+			mm.add("Read a wallet", "readAWallet");
 		}
 
 		mm.showOptionList("\n==========\n\nHello! Today is a beautiful day, what do want to do?");
@@ -298,6 +300,19 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		String publicNote = StringUtils.trimToNull(KMCInputUtil.getRawInput(null));
 
 		saveAWallet_saveInfo(address, privateKey, wt, mnemonic, publicNote, privateNote);
+	}
+
+	@Override
+	protected void readAWallet_choose(List<Wallet> wallets) {
+		int counter = 1;
+		for (Wallet w : wallets) {
+			showMsg(" %d. %s (%s)", counter++, w.getAddress(), w.getWalletType());
+		}
+	}
+
+	@Override
+	protected void readAWallet_read(Wallet wallet) {
+		//TODO
 	}
 
 	private int getMenuSelection() {

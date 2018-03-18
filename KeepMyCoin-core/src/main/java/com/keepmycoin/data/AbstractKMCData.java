@@ -2,6 +2,8 @@ package com.keepmycoin.data;
 
 import java.util.Base64;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -95,5 +97,11 @@ public abstract class AbstractKMCData {
 	@JsonIgnore
 	protected byte[] decodeToBuffer(String data) {
 		return data == null ? null : Base64.getDecoder().decode(data);
+	}
+
+	@JsonIgnore
+	@SuppressWarnings("unchecked")
+	public static <T extends AbstractKMCData> List<T> filter(List<AbstractKMCData> files, Class<T> clz) {
+		return (List<T>) files.stream().filter(f -> f != null && f.getClass().equals(clz)).collect(Collectors.toList());
 	}
 }

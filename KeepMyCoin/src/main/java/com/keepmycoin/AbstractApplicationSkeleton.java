@@ -2,12 +2,15 @@ package com.keepmycoin;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 
 import com.bitsofproof.supernode.wallet.BIP39;
 import com.keepmycoin.crypto.AES128;
 import com.keepmycoin.crypto.AES256;
+import com.keepmycoin.data.AbstractKMCData;
 import com.keepmycoin.data.Wallet;
 import com.keepmycoin.exception.CryptoException;
 import com.keepmycoin.utils.KMCArrayUtil;
@@ -268,6 +271,20 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 
 		askContinueOrExit(null);
 	}
+
+	@Override
+	public void readAWallet() throws Exception {
+		List<Wallet> wallets = AbstractKMCData.filter(this.dvc.getAllKMCFiles(), Wallet.class);
+		if (CollectionUtils.isEmpty(wallets)) {
+			showMsg("There is no wallet file! You will need to perform saving a wallet first");
+			return;
+		}
+		readAWallet_choose(wallets);
+	}
+	
+	protected abstract void readAWallet_choose(List<Wallet> wallets);
+	
+	protected abstract void readAWallet_read(Wallet wallet);
 
 	protected abstract void showMsg(String format, Object... args);
 

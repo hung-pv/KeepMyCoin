@@ -1,5 +1,6 @@
 package com.keepmycoin.console;
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import com.keepmycoin.IKeepMyCoin;
@@ -24,7 +25,7 @@ public class Option {
 		return displayText;
 	}
 
-	public <T extends IKeepMyCoin> void processMethod(IKeepMyCoin instance) {
+	public <T extends IKeepMyCoin> void processMethod(IKeepMyCoin instance) throws Exception {
 		try {
 			Method med = KMCReflectionUtil.getDeclaredMethod(instance.getClass(), this.processMethod);
 
@@ -46,7 +47,12 @@ public class Option {
 				log.fatal("NoSuchMethodException", e);
 				System.err.println("Under construction !!!");
 			} else {
-				throw new RuntimeException(e);
+				Throwable caused = e.getCause();
+				if (caused instanceof InvocationTargetException) {
+					throw (Exception) caused.getCause();
+				} else {
+					throw e;
+				}
 			}
 		}
 	}
