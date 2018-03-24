@@ -305,14 +305,27 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 	@Override
 	protected void readAWallet_choose(List<Wallet> wallets) {
 		int counter = 1;
+		MenuManager mm = new MenuManager();
 		for (Wallet w : wallets) {
-			showMsg(" %d. %s (%s)", counter++, w.getAddress(), w.getWalletType());
+			mm.add(String.format(" %d. %s (%s)", counter++, w.getAddress(), w.getWalletType()), null);
 		}
+		int selection;
+		while (true) {
+			mm.showOptionList("Select a wallet");
+			selection = getMenuSelection();
+			if (selection < 1 || selection > wallets.size()) {
+				showMsg("Invalid option");
+				continue;
+			}
+			break;
+		}
+		readAWallet_read(wallets.get(selection - 1));
 	}
 
 	@Override
 	protected void readAWallet_read(Wallet wallet) {
-		//TODO
+		if (wallet == null) return;
+		showMsg("Address: %s", wallet.getAddress());
 	}
 
 	private int getMenuSelection() {
