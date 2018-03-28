@@ -37,11 +37,17 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 				setupKMCDevice();
 			}
 		}
+		
+		setupSessionTimeOut();
 	}
 
 	protected abstract void findKMCDevice() throws Exception;
 
 	protected abstract void setupKMCDevice() throws Exception;
+
+	protected void setupSessionTimeOut() throws Exception {
+		//TODO implement
+	}
 
 	@Override
 	public void launch() throws Exception {
@@ -248,15 +254,9 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 
 	protected void saveAWallet_saveInfo(String address, String privateKey, WalletType walletType, String mnemonic,
 			String publicNote, String privateNote) throws Exception {
-
-		byte[] bprivateKey = KMCStringUtil.getBytesNullable(privateKey);
-		byte[] privateKeyWithAES256Encrypted = aes256Cipher.encryptNullable(bprivateKey);
-
-		byte[] bmnemonic = KMCStringUtil.getBytesNullable(mnemonic);
-		byte[] mnemonicWithAES256Encrypted = aes256Cipher.encryptNullable(bmnemonic);
-
-		byte[] bnotePrivate = KMCStringUtil.getBytesNullable(privateNote);
-		byte[] notePrivateWithAES256Encrypted = aes256Cipher.encryptNullable(bnotePrivate);
+		byte[] privateKeyWithAES256Encrypted = encryptUsingExistsKeystore(privateKey);
+		byte[] mnemonicWithAES256Encrypted = encryptUsingExistsKeystore(mnemonic);
+		byte[] notePrivateWithAES256Encrypted = encryptUsingExistsKeystore(privateNote);
 
 		// Clear clip-board
 		KMCClipboardUtil.clear();
@@ -282,9 +282,18 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 		readAWallet_choose(wallets);
 	}
 	
-	protected abstract void readAWallet_choose(List<Wallet> wallets);
+	protected byte[] encryptUsingExistsKeystore(String data) {
+		return aes256Cipher.encryptNullable(KMCStringUtil.getBytesNullable(data));
+	}
 	
-	protected abstract void readAWallet_read(Wallet wallet);
+	protected String decryptUsingExistsKeystore(byte[] buffer) {
+		byte[] decrypted = aes256Cipher.decryptNullable(buffer);
+		return decrypted == null ? null : new String(decrypted, StandardCharsets.UTF_8);
+	}
+	
+	protected abstract void readAWallet_choose(List<Wallet> wallets) throws Exception;
+	
+	protected abstract void readAWallet_read(Wallet wallet) throws Exception;
 
 	protected abstract void showMsg(String format, Object... args);
 

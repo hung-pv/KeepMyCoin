@@ -7,18 +7,18 @@ import com.keepmycoin.AbstractApplicationSkeleton;
 import com.keepmycoin.IKeepMyCoin;
 
 public class KMCReflectionUtil {
-	public static <T extends IKeepMyCoin> Method getDeclaredMethod(Class<T> clz, String methodName)
+	public static <T extends IKeepMyCoin> Method getDeclaredMethod(Class<T> clz, String methodName, Class<?>...parameterTypes)
 			throws NoSuchMethodException {
 		Method med;
 		try {
 			try {
-				med = clz.getDeclaredMethod(methodName);
+				med = clz.getDeclaredMethod(methodName, parameterTypes);
 			} catch (NoSuchMethodException e) {
 				try {
-					med = AbstractApplicationSkeleton.class.getDeclaredMethod(methodName);
+					med = AbstractApplicationSkeleton.class.getDeclaredMethod(methodName, parameterTypes);
 				} catch (NoSuchMethodException e1) {
 					try {
-						med = IKeepMyCoin.class.getDeclaredMethod(methodName);
+						med = IKeepMyCoin.class.getDeclaredMethod(methodName, parameterTypes);
 					} catch (NoSuchMethodException e2) {
 						throw e2;
 					}
@@ -63,11 +63,11 @@ public class KMCReflectionUtil {
 		return false;
 	}
 
-	public static void invokeMethodBypassSecurity(Object instance, Method med) throws Exception {
+	public static void invokeMethodBypassSecurity(Object instance, Method med, Object...methodArgs) throws Exception {
 		if (med.isAccessible())
 			return;
 		med.setAccessible(true);
-		med.invoke(instance);
+		med.invoke(instance, methodArgs);
 		med.setAccessible(false);
 	}
 }

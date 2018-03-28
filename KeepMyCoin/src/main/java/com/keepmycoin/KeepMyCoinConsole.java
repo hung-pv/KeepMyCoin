@@ -156,13 +156,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 			mm.add("Read a wallet", "readAWallet");
 		}
 
-		mm.showOptionList("\n==========\n\nHello! Today is a beautiful day, what do want to do?");
-		int selection = getMenuSelection();
-		if (!validateMenuSelection(selection, mm)) {
-			showMsg("Invalid option!");
-			launchMenu();
-			return;
-		}
+		int selection = getMenuSelection(mm, "\n==========\n\nHello! Today is a beautiful day, what do want to do?");
 		mm.getOptionBySelection(selection).processMethod(this);
 	}
 
@@ -238,17 +232,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		for (WalletType wt : WalletType.values()) {
 			mm.add(wt.getDisplayText(), null);
 		}
-		int selection;
-		while (true) {
-			mm.showOptionList("Select wallet type:");
-			selection = getMenuSelection();
-			if (selection < 1 || selection > WalletType.values().length) {
-				showMsg("Invalid option");
-				continue;
-			}
-			break;
-		}
-
+		int selection = getMenuSelection(mm, "Select wallet type:");
 		WalletType wt = WalletType.values()[selection - 1];
 
 		showMsg("Enter your private key (will be encrypted):");
@@ -303,45 +287,73 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 	}
 
 	@Override
-	protected void readAWallet_choose(List<Wallet> wallets) {
+	protected void readAWallet_choose(List<Wallet> wallets) throws Exception {
 		int counter = 1;
 		MenuManager mm = new MenuManager();
 		for (Wallet w : wallets) {
 			mm.add(String.format(" %d. %s (%s)", counter++, w.getAddress(), w.getWalletType()), null);
 		}
-		int selection;
-		while (true) {
-			mm.showOptionList("Select a wallet");
-			selection = getMenuSelection();
-			if (selection < 1 || selection > wallets.size()) {
-				showMsg("Invalid option");
-				continue;
-			}
-			break;
-		}
+		int selection = getMenuSelection(mm, "Select a wallet");
 		readAWallet_read(wallets.get(selection - 1));
 	}
 
 	@Override
-	protected void readAWallet_read(Wallet wallet) {
-		if (wallet == null) return;
-		showMsg("Address: %s", wallet.getAddress());
+	protected void readAWallet_read(Wallet wallet) throws Exception {
+		if (wallet == null)
+			return;
+		showMsg("* Address: %s", wallet.getAddress());
+		showMsg("* Note:\n%s", wallet.getPublicNote());
+		MenuManager mm = new MenuManager();
+		mm.add("Go back to main menu", null);
+		mm.add("Copy private key to clipboard", "readAWallet_action", wallet, "copy", "private key");
+		mm.add("Copy mnemonic to clipboard", "readAWallet_action", wallet, "copy", "mnemonic");
+		mm.add("Show private key", "readAWallet_action", wallet, "show", "private key");
+		mm.add("Show mnemonic", "readAWallet_action", wallet, "show", "mnemonic");
+		mm.add("Show private note", "readAWallet_action", wallet, "show", "private note");
+		mm.add("Show ALL private key, mnemonic and also private note", "readAWallet_action", wallet, "show", "all");
+
+		int selection = getMenuSelection(mm, "* What do want to do?");
+		mm.getOptionBySelection(selection).processMethod(this);
 	}
 
-	private int getMenuSelection() {
-		String input = KMCInputUtil.getInput("Action: ", 1);
-		if (input == null) {
-			return 0;
+	@SuppressWarnings("unused")
+	private void readAWallet_action(Wallet wallet, String action, String target) {
+		if (target.equals("all")) {
+			String privateKey = decryptUsingExistsKeystore(wallet.getEncryptedPrivateKeyBuffer());
+			String mnemonic = decryptUsingExistsKeystore(wallet.getEncryptedMnemonicBuffer());
+			String privateNote = decryptUsingExistsKeystore(wallet.getEncryptedPrivateNoteBuffer());
+			if (action.equals("show")) {
+				if (privateKey != null) {
+					showMsg("Private key: %s", privateKey);
+				} else {
+					showMsg("(Private Key does not exists)");
+				}
+				if (mnemonic != null) {
+					showMsg("Mnemonic: %s", mnemonic);
+				} else {
+					showMsg("(Mnemonic does not exists)");
+				}
+				if (privateNote != null) {
+					showMsg("Private note:\n%s", privateNote);
+				} else {
+					showMsg("(Private Note does not exists)");
+				}
+			}
+		} else {
+			String content = null;
+			if (target.equals("private key")) {
+				content = decryptUsingExistsKeystore(wallet.getEncryptedPrivateKeyBuffer());
+			} else if (target.equals("mnemonic")) {
+				content = decryptUsingExistsKeystore(wallet.getEncryptedMnemonicBuffer());
+			} else if (target.equals("private note")) {
+				content = decryptUsingExistsKeystore(wallet.getEncryptedPrivateNoteBuffer());
+			}
+			if (action.equals("copy")) {
+				KMCClipboardUtil.setText(content, null);
+			} else if (action.equals("show")) {
+				showMsg("Here it is:\n%s", content);
+			}
 		}
-		try {
-			return Integer.parseInt(input);
-		} catch (Exception e) {
-			return 0;
-		}
-	}
-
-	private boolean validateMenuSelection(int option, MenuManager mm) {
-		return option < 1 ? false : option <= mm.countMenus();
 	}
 
 	@Override
@@ -377,5 +389,34 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		}
 		showMsg("Thanks for using our production");
 		System.exit(0);
+	}
+
+	private int getMenuSelection() {
+		String input = KMCInputUtil.getInput("Action: ", 1);
+		if (input == null) {
+			return 0;
+		}
+		try {
+			return Integer.parseInt(input);
+		} catch (Exception e) {
+			return 0;
+		}
+	}
+
+	private int getMenuSelection(MenuManager mm, String msg) {
+		return getMenuSelection(mm, msg, mm.countMenus());
+	}
+
+	private int getMenuSelection(MenuManager mm, String msg, int maxSize) {
+		int selection;
+		while (true) {
+			mm.showOptionList(msg);
+			selection = getMenuSelection();
+			if (selection < 1 || selection > maxSize) {
+				showMsg("Invalid option");
+				continue;
+			}
+			return selection;
+		}
 	}
 }

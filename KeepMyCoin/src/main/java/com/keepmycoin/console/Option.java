@@ -15,10 +15,21 @@ public class Option {
 
 	private String displayText;
 	private String processMethod;
+	private Object[] methodArgs;
+	private Class<?>[] methodParameterTypes;
 
-	public Option(String displayText, String processMethod) {
+	public Option(String displayText, String processMethod, Object...methodArgs) {
 		this.displayText = displayText;
 		this.processMethod = processMethod;
+		this.methodArgs = methodArgs;
+		this.methodParameterTypes = new Class<?>[this.methodArgs.length];
+		for(int i = 0; i < this.methodArgs.length; i++) {
+			this.methodParameterTypes[i] = this.methodArgs[i].getClass();
+		}
+	}
+	
+	public Option(String displayText, String processMethod) {
+		this(displayText, processMethod, new Object[0]);
 	}
 
 	public String getDisplayText() {
@@ -26,15 +37,16 @@ public class Option {
 	}
 
 	public <T extends IKeepMyCoin> void processMethod(IKeepMyCoin instance) throws Exception {
+		if (this.processMethod == null) return;
 		try {
-			Method med = KMCReflectionUtil.getDeclaredMethod(instance.getClass(), this.processMethod);
+			Method med = KMCReflectionUtil.getDeclaredMethod(instance.getClass(), this.processMethod, this.methodParameterTypes);
 
 			if (KMCReflectionUtil.isMethodHasAnnotation(med, RequiredKeystore.class, instance.getClass())) {
 				Method medLoadKeystore = KMCReflectionUtil.getDeclaredMethod(instance.getClass(), "loadKeystore");
 				KMCReflectionUtil.invokeMethodBypassSecurity(instance, medLoadKeystore);
 			}
 
-			med.invoke(instance);
+			KMCReflectionUtil.invokeMethodBypassSecurity(instance, med, this.methodArgs);
 
 			if (instance instanceof KeepMyCoinConsole) {
 				if (KMCReflectionUtil.isMethodHasAnnotation(med, Continue.class, instance.getClass())) {
