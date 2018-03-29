@@ -7,6 +7,7 @@ package com.keepmycoin.crypto;
 
 import java.util.Arrays;
 
+import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.crypto.BufferedBlockCipher;
 import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.engines.AESEngine;
@@ -18,9 +19,40 @@ import org.bouncycastle.crypto.params.KeyParameter;
 import org.bouncycastle.crypto.params.ParametersWithIV;
 
 import com.keepmycoin.exception.CryptoException;
+import com.keepmycoin.utils.KMCArrayUtil;
+import com.keepmycoin.utils.KMCJavaScriptUtil;
 import com.keepmycoin.utils.KMCStringUtil;
 
 public class AES256 {
+
+	public static String encrypt(byte[] data, byte[] key) throws Exception {
+		StringBuilder additionalScript = new StringBuilder();
+		additionalScript.append("var aesKey = [");
+		additionalScript.append(StringUtils.join(KMCArrayUtil.unsignedBytes(key), ','));
+		additionalScript.append("];\n");
+		
+		additionalScript.append("var buffer = [");
+		additionalScript.append(StringUtils.join(KMCArrayUtil.unsignedBytes(data), ','));
+		additionalScript.append("];\n");
+		
+		additionalScript.append("var encrypted = encryptAES(aesKey, buffer);");
+		return String.valueOf(KMCJavaScriptUtil.executeAndGetValue("encrypted", additionalScript.toString(), "aes256-engine", "aes256-ext"));
+	}
+
+	public static String decrypt(byte[] data, byte[] key) throws Exception {
+		StringBuilder additionalScript = new StringBuilder();
+		additionalScript.append("var aesKey = [");
+		additionalScript.append(StringUtils.join(KMCArrayUtil.unsignedBytes(key), ','));
+		additionalScript.append("];\n");
+		
+		additionalScript.append("var buffer = [");
+		additionalScript.append(StringUtils.join(KMCArrayUtil.unsignedBytes(data), ','));
+		additionalScript.append("];\n");
+		
+		additionalScript.append("var decrypted = decryptAES(aesKey, buffer);");
+		return String.valueOf(KMCJavaScriptUtil.executeAndGetValue("decrypted", additionalScript.toString(), "aes256-engine", "aes256-ext"));
+	}
+	
 	public static byte[] encrypt(byte[] data, byte[] key, String iv) {
 		return process(data, key, KMCStringUtil.getBytes(iv, 16), true);
 	}
