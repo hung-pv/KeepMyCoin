@@ -169,7 +169,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 	}
 
 	@Override
-	protected void generateNewKeystore_confirmSavedMnemonic(String mnemonic, byte[] keyWithBIP39Encode, byte[] key,
+	protected void generateNewKeystore_confirmSavedMnemonic(String mnemonic, byte[] key,
 			String pwd) throws Exception {
 		log.trace("generateNewKeystore_confirmSavedMnemonic");
 		while (!KMCInputUtil.confirm("Did you saved the mnemonic to somewhere?")) {
@@ -178,17 +178,17 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		if (!Configuration.DEBUG) {
 			KMCClipboardUtil.clear();
 		}
-		generateNewKeystore_confirmMnemonic(mnemonic, keyWithBIP39Encode, key, pwd);
+		generateNewKeystore_confirmMnemonic(mnemonic, key, pwd);
 	}
 
 	@Override
-	protected void generateNewKeystore_confirmMnemonic(String mnemonic, byte[] keyWithBIP39Encode, byte[] key,
+	protected void generateNewKeystore_confirmMnemonic(String mnemonic, byte[] key,
 			String pwd) throws Exception {
 		log.trace("generateNewKeystore_confirmMnemonic");
 		showMsg("For sure you already saved these seed words, you have to typing these words again:");
 		KMCInputUtil.requireConfirmation(mnemonic);
 		showMsg("Good job! Keep these seed words safe");
-		generateNewKeystore_save(mnemonic, keyWithBIP39Encode, key, pwd);
+		generateNewKeystore_save(mnemonic, key, pwd);
 	}
 
 	@Override
@@ -204,10 +204,13 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 				showMsg("Incorrect, input again or type 'cancel':");
 			}
 			mnemonic = KMCInputUtil.getRawInput(null);
+			if (mnemonic == null) {
+				continue;
+			}
 			if ("cancel".equalsIgnoreCase(mnemonic)) {
 				return;
 			}
-		} while (!Validator.isValidSeedWords(mnemonic));
+		} while (mnemonic.trim().split("\\s").length % 2 != 0);
 
 		String pwd = KMCInputUtil.getPassword("Passphrase: ");
 		if (pwd == null) {
@@ -288,6 +291,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 
 	@Override
 	protected void readAWallet_choose(List<Wallet> wallets) throws Exception {
+		log.trace("readAWallet_choose");
 		int counter = 1;
 		MenuManager mm = new MenuManager();
 		for (Wallet w : wallets) {
@@ -299,6 +303,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 
 	@Override
 	protected void readAWallet_read(Wallet wallet) throws Exception {
+		log.trace("readAWallet_read");
 		if (wallet == null)
 			return;
 		showMsg("* Address: %s", wallet.getAddress());
@@ -317,7 +322,8 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 	}
 
 	@SuppressWarnings("unused")
-	private void readAWallet_action(Wallet wallet, String action, String target) {
+	private void readAWallet_action(Wallet wallet, String action, String target) throws Exception {
+		log.trace("readAWallet_action");
 		if (target.equals("all")) {
 			String privateKey = decryptUsingExistsKeystore(wallet.getEncryptedPrivateKeyBuffer());
 			String mnemonic = decryptUsingExistsKeystore(wallet.getEncryptedMnemonicBuffer());
@@ -392,6 +398,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 	}
 
 	private int getMenuSelection() {
+		log.trace("getMenuSelection");
 		String input = KMCInputUtil.getInput("Action: ", 1);
 		if (input == null) {
 			return 0;
@@ -404,10 +411,12 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 	}
 
 	private int getMenuSelection(MenuManager mm, String msg) {
+		log.trace("getMenuSelection");
 		return getMenuSelection(mm, msg, mm.countMenus());
 	}
 
 	private int getMenuSelection(MenuManager mm, String msg, int maxSize) {
+		log.trace("getMenuSelection");
 		int selection;
 		while (true) {
 			mm.showOptionList(msg);

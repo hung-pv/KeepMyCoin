@@ -8,6 +8,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Formatter;
 
+import javax.xml.bind.DatatypeConverter;
+
 import org.apache.commons.lang3.StringUtils;
 
 public class KMCStringUtil {
@@ -98,5 +100,15 @@ public class KMCStringUtil {
 
 	public static String convertDateTimeToString(Date date) {
 		return sdf.format(date);
+	}
+	
+	public static String printHexBinary(byte[] arr) {
+		if (arr == null) return null;
+		return DatatypeConverter.printHexBinary(arr).toLowerCase();
+	}
+	
+	public static byte[] parseHexBinary(String hex) {
+		if (hex == null) return null;
+		return DatatypeConverter.parseHexBinary(hex);
 	}
 }

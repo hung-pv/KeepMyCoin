@@ -4,12 +4,10 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 
-import com.bitsofproof.supernode.wallet.BIP39;
-import com.keepmycoin.crypto.AES128;
-import com.keepmycoin.crypto.AES256;
+import com.keepmycoin.crypto.AES;
+import com.keepmycoin.crypto.BIP39;
 import com.keepmycoin.data.AbstractKMCData;
 import com.keepmycoin.data.Wallet;
 import com.keepmycoin.exception.CryptoException;
@@ -24,7 +22,7 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 			.getLogger(AbstractApplicationSkeleton.class);
 
 	protected KMCDevice dvc = new KMCDevice(Configuration.KMC_FOLDER);
-	protected AES256 aes256Cipher = null;
+	protected AES aes256Cipher = null;
 
 	protected void preLaunch() throws Exception {
 		log.trace("preLaunch");
@@ -89,14 +87,15 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 		log.trace("generateNewKeystore_fromInitPassPharse");
 		// Gen key
 		byte[] key = KMCArrayUtil.randomBytes(32);
-		byte[] keyWithAES128 = AES128.encrypt(key, pwd);
+		byte[] keyWithAES = AES.encrypt(key, pwd);
 
 		// Mnemonic
-		byte[] keyWithBIP39Encode = BIP39.encode(keyWithAES128, pwd);
-		String mnemonic = BIP39.getMnemonic(keyWithBIP39Encode).trim();
+		String mnemonic = BIP39.entropyToMnemonic(keyWithAES);
+		String entropyToVerify = BIP39.mnemonicToEntropy(mnemonic);
+		byte[] entropyToVerifyBuffer = KMCStringUtil.parseHexBinary(entropyToVerify);
 
 		// Verify BIP39
-		byte[] keyToVerify = AES128.decrypt(BIP39.decode(mnemonic, pwd), pwd);
+		byte[] keyToVerify = AES.decrypt(entropyToVerifyBuffer, pwd);
 		for (int i = 0; i < key.length; i++) {
 			if (key[i] != keyToVerify[i]) {
 				throw new RuntimeException("Mismatch BIP39, contact author");
@@ -111,20 +110,19 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 				"LOSING THESE WORDS, YOU CAN NOT RESTORE YOUR PRIVATE KEY", mnemonic.split("\\s").length, mnemonic);
 		KMCClipboardUtil.setText(mnemonic, "Mnemonic");
 
-		generateNewKeystore_confirmSavedMnemonic(mnemonic, keyWithBIP39Encode, key, pwd);
+		generateNewKeystore_confirmSavedMnemonic(mnemonic, key, pwd);
 	}
 
-	protected abstract void generateNewKeystore_confirmSavedMnemonic(String mnemonic, byte[] keyWithBIP39Encode,
-			byte[] key, String pwd) throws Exception;
+	protected abstract void generateNewKeystore_confirmSavedMnemonic(String mnemonic, byte[] key, String pwd) throws Exception;
 
-	protected abstract void generateNewKeystore_confirmMnemonic(String mnemonic, byte[] keyWithBIP39Encode, byte[] key,
+	protected abstract void generateNewKeystore_confirmMnemonic(String mnemonic, byte[] key,
 			String pwd) throws Exception;
 
-	protected void generateNewKeystore_save(String mnemonic, byte[] keyWithBIP39Encode, byte[] key, String pwd)
+	protected void generateNewKeystore_save(String mnemonic, byte[] key, String pwd)
 			throws Exception {
 		log.trace("generateNewKeystore_save");
 		// Write file
-		KeystoreManager.save(keyWithBIP39Encode);
+		KeystoreManager.save(AES.encrypt(key, pwd));
 
 		showMsg("Keystore created successfully");
 
@@ -147,7 +145,7 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 	protected void restoreKeystore_processUsingInput(String mnemonic, String passPharse) throws Exception {
 		log.trace("restoreKeystore_processUsingInput");
 
-		byte[] keyWithAES128, key, keyWithBIP39Encode, usbIdContentBuffer, usbIdContent;
+		byte[] keyWithAES, key, usbIdContentBuffer, usbIdContent;
 		int cacheSeedWordsLength = 0;
 
 		try {
@@ -160,12 +158,11 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 				usbIdContent = new byte[0];
 			}
 
-			keyWithAES128 = BIP39.decode(mnemonic, passPharse);
-			key = AES128.decrypt(keyWithAES128, passPharse);
-			keyWithBIP39Encode = BIP39.encode(keyWithAES128, passPharse);
+			keyWithAES = BIP39.mnemonicToEntropyBuffer(mnemonic);
+			key = AES.decrypt(keyWithAES, passPharse);
 
 			if (cacheSeedWordsLength > 0) {
-				String mnemonicFromUsbID = new String(AES256.decrypt(usbIdContent, key, passPharse),
+				String mnemonicFromUsbID = new String(AES.decrypt(usbIdContent, passPharse),
 						StandardCharsets.UTF_8);
 				if (!mnemonic.trim().equals(mnemonicFromUsbID.trim())) {
 					showMsg("Incorrect! You have to check your seed words and your passphrase then try again!\n" + //
@@ -182,7 +179,7 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 			return;
 		}
 
-		KeystoreManager.save(keyWithBIP39Encode);
+		KeystoreManager.save(keyWithAES);
 		showMsg("Keystore restored successfully");
 
 		// Write MEMORIZE
@@ -192,7 +189,7 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 	protected void saveChecksum(String mnemonic, byte[] key, String pwd) {
 		log.trace("saveChecksum");
 		try {
-			byte[] content = AES256.encrypt(KMCStringUtil.getBytes(mnemonic, 256), key, pwd);
+			byte[] content = AES.encrypt(KMCStringUtil.getBytes(mnemonic, 256), pwd);
 			byte[] buffer = new byte[content.length + 1];
 			System.arraycopy(content, 0, buffer, 1, content.length);
 			buffer[0] = (byte) mnemonic.split("\\s").length;
@@ -231,17 +228,16 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 	protected abstract void loadKeystore_getPasspharse() throws Exception;
 
 	protected void loadKeystore_processUsingPasspharse(String passpharse) throws Exception {
-		byte[] keyWithBIP39Encode = KeystoreManager.getEncryptedKey();
-		String mnemonic = BIP39.getMnemonic(keyWithBIP39Encode);
-		byte[] keyWithAES128 = BIP39.decode(mnemonic, passpharse);
+		log.trace("loadKeystore_processUsingPasspharse");
+		byte[] keyWithAES = KeystoreManager.getEncryptedKey();
 		byte[] key = null;
 		try {
-			key = AES128.decrypt(keyWithAES128, passpharse);
+			key = AES.decrypt(keyWithAES, passpharse);
 		} catch (CryptoException e) {
 			showMsg("Incorrect passphrase");
 			System.exit(1);
 		}
-		aes256Cipher = new AES256(key, passpharse);
+		aes256Cipher = new AES(key);
 	}
 
 	@Override
@@ -254,6 +250,7 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 
 	protected void saveAWallet_saveInfo(String address, String privateKey, WalletType walletType, String mnemonic,
 			String publicNote, String privateNote) throws Exception {
+		log.trace("saveAWallet_saveInfo");
 		byte[] privateKeyWithAES256Encrypted = encryptUsingExistsKeystore(privateKey);
 		byte[] mnemonicWithAES256Encrypted = encryptUsingExistsKeystore(mnemonic);
 		byte[] notePrivateWithAES256Encrypted = encryptUsingExistsKeystore(privateNote);
@@ -274,19 +271,22 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 
 	@Override
 	public void readAWallet() throws Exception {
+		log.trace("readAWallet");
 		List<Wallet> wallets = AbstractKMCData.filter(this.dvc.getAllKMCFiles(), Wallet.class);
-		if (CollectionUtils.isEmpty(wallets)) {
+		if (wallets.isEmpty()) {
 			showMsg("There is no wallet file! You will need to perform saving a wallet first");
 			return;
 		}
 		readAWallet_choose(wallets);
 	}
 	
-	protected byte[] encryptUsingExistsKeystore(String data) {
+	protected byte[] encryptUsingExistsKeystore(String data) throws Exception {
+		log.trace("encryptUsingExistsKeystore");
 		return aes256Cipher.encryptNullable(KMCStringUtil.getBytesNullable(data));
 	}
 	
-	protected String decryptUsingExistsKeystore(byte[] buffer) {
+	protected String decryptUsingExistsKeystore(byte[] buffer) throws Exception {
+		log.trace("decryptUsingExistsKeystore");
 		byte[] decrypted = aes256Cipher.decryptNullable(buffer);
 		return decrypted == null ? null : new String(decrypted, StandardCharsets.UTF_8);
 	}
@@ -298,6 +298,6 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 	protected abstract void showMsg(String format, Object... args);
 
 	protected void askContinueOrExit(String question) throws Exception {
-		//
+		log.trace("askContinueOrExit");
 	}
 }

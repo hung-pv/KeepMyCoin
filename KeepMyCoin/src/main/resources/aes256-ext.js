@@ -12,7 +12,12 @@ var decryptAES = function(key, encryptedBuffer) {
 	// decrypt a new instance must be instantiated.
 	var aesCtr = new aesjs.ModeOfOperation.ctr(key, new aesjs.Counter(5));
 	var decryptedBytes = aesCtr.decrypt(encryptedBuffer);
-	// Convert our bytes back into text
-	var decryptedText = aesjs.utils.utf8.fromBytes(decryptedBytes);
-	return decryptedText;
+	var result = "";
+	for (let i = 0; i < decryptedBytes.length; i++) {
+		if (i > 0) {
+			result += ",";
+		}
+		result+=decryptedBytes[i];
+	}
+	return result;
 }

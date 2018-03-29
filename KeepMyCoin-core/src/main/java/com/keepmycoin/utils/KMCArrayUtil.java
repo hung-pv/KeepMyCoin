@@ -10,7 +10,7 @@ public class KMCArrayUtil {
 		return bytes;
 	}
 	
-	public static int[] unsignedBytes(byte[] arr) throws NoSuchAlgorithmException {
+	public static int[] unsignedBytes(byte[] arr) {
 		int[] result = new int[arr.length];
 		for(int i = 0; i < arr.length; i++) {
 			result[i] = arr[i] & 0xFF;

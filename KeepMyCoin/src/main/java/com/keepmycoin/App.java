@@ -1,7 +1,6 @@
 package com.keepmycoin;
 
 import java.io.File;
-import java.security.Security;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -32,7 +31,6 @@ public class App {
 
 	private static void initialize(String[] args) throws Exception {
 		log.trace("initialize");
-		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 
 		List<String> larg = Arrays.asList(args).stream().map(a -> a.trim()).filter(a -> a.length() > 0)
 				.collect(Collectors.toList());
@@ -54,5 +52,7 @@ public class App {
 			}
 		}
 		Configuration.KMC_FOLDER = fixedKMCFolder;
+		
+		JavaScript.initialize();
 	}
 }
