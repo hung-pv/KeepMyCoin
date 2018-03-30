@@ -7,6 +7,8 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.keepmycoin.js.JavaScript;
+
 public class App {
 
 	private static final org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger(App.class);

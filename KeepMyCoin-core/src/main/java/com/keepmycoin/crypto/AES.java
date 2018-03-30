@@ -5,7 +5,7 @@
 
 package com.keepmycoin.crypto;
 
-import com.keepmycoin.JavaScript;
+import com.keepmycoin.js.JavaScript;
 import com.keepmycoin.utils.KMCJavaScriptUtil;
 import com.keepmycoin.utils.KMCStringUtil;
 

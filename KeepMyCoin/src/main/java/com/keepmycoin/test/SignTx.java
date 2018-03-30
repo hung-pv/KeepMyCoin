@@ -4,7 +4,6 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import com.keepmycoin.JavaScript;
 import com.keepmycoin.blockchain.EthereumBlockChain;
 import com.keepmycoin.blockchain.EthereumSignedTransaction;
 import com.keepmycoin.blockchain.ISignedTransaction;
@@ -12,8 +11,9 @@ import com.keepmycoin.blockchain.ITransactionInput;
 import com.keepmycoin.blockchain.IUnlockMethod;
 import com.keepmycoin.blockchain.SimpleEthereumTransactionInput;
 import com.keepmycoin.blockchain.UnlockByPrivateKey;
-import com.keepmycoin.jsdata.EtherSignedTx;
-import com.keepmycoin.jsdata.EtherTxInfo;
+import com.keepmycoin.js.JavaScript;
+import com.keepmycoin.js.data.EtherSignedTx;
+import com.keepmycoin.js.data.EtherTxInfo;
 import com.keepmycoin.utils.KMCJsonUtil;
 
 public class SignTx {

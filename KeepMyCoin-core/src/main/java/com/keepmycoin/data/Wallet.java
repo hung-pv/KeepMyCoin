@@ -3,11 +3,28 @@ package com.keepmycoin.data;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnoreType;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Wallet extends AbstractKMCData {
+
+	@JsonIgnoreType
+	public enum WalletType {
+		ERC20("Ethereum (and ERC20 tokens)"), BIT("Bitcoin based"), Other("Other");
+
+		private String displayText;
+
+		private WalletType(String displayText) {
+			this.displayText = displayText;
+		}
+
+		public String getDisplayText() {
+			return displayText;
+		}
+	}
+
 	@JsonProperty("address")
 	private String address;
 	@JsonProperty("encryptedPrivateKey")
@@ -32,7 +49,7 @@ public class Wallet extends AbstractKMCData {
 		this.publicNote = publicNote;
 		setEncryptedPrivateNoteBuffer(encryptedPrivateNoteBuffer);
 	}
-	
+
 	public Wallet() {
 		super();
 		this.address = null;

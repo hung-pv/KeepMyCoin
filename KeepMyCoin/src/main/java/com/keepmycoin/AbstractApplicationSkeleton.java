@@ -11,6 +11,7 @@ import com.keepmycoin.crypto.BIP39;
 import com.keepmycoin.data.AbstractKMCData;
 import com.keepmycoin.data.Account;
 import com.keepmycoin.data.Wallet;
+import com.keepmycoin.data.Wallet.WalletType;
 import com.keepmycoin.exception.CryptoException;
 import com.keepmycoin.utils.KMCArrayUtil;
 import com.keepmycoin.utils.KMCClipboardUtil;

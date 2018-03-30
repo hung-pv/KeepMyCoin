@@ -1,4 +1,4 @@
-package com.keepmycoin.jsdata;
+package com.keepmycoin.js.data;
 
 import java.math.BigInteger;
 import java.util.UUID;

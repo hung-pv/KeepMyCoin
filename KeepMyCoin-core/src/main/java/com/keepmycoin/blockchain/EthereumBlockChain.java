@@ -1,9 +1,9 @@
 package com.keepmycoin.blockchain;
 
-import com.keepmycoin.JavaScript;
 import com.keepmycoin.exception.UnlockMethodNotSupportedException;
-import com.keepmycoin.jsdata.EtherSignedTx;
-import com.keepmycoin.jsdata.EtherTxInfo;
+import com.keepmycoin.js.JavaScript;
+import com.keepmycoin.js.data.EtherSignedTx;
+import com.keepmycoin.js.data.EtherTxInfo;
 import com.keepmycoin.utils.KMCJsonUtil;
 
 public class EthereumBlockChain implements IBlockChain {

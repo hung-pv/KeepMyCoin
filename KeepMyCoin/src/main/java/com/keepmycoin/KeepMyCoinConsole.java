@@ -13,6 +13,7 @@ import org.apache.commons.lang3.SystemUtils;
 import com.keepmycoin.console.MenuManager;
 import com.keepmycoin.data.Account;
 import com.keepmycoin.data.Wallet;
+import com.keepmycoin.data.Wallet.WalletType;
 import com.keepmycoin.exception.OSNotImplementedException;
 import com.keepmycoin.utils.KMCClipboardUtil;
 import com.keepmycoin.utils.KMCFileUtil;

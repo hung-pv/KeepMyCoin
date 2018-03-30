@@ -1,4 +1,4 @@
-package com.keepmycoin;
+package com.keepmycoin.js;
 
 import java.io.File;
 import java.io.IOException;

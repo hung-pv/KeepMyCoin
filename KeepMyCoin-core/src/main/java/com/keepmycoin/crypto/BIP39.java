@@ -1,6 +1,6 @@
 package com.keepmycoin.crypto;
 
-import com.keepmycoin.JavaScript;
+import com.keepmycoin.js.JavaScript;
 import com.keepmycoin.utils.KMCStringUtil;
 
 public class BIP39 {

@@ -1,4 +1,4 @@
-package com.keepmycoin.jsdata;
+package com.keepmycoin.js.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
