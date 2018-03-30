@@ -6,8 +6,8 @@ import static org.junit.Assert.assertNotNull;
 
 import org.junit.Test;
 
-import com.keepmycoin.JavaScript;
 import com.keepmycoin.crypto.AES;
+import com.keepmycoin.crypto.BIP39;
 
 public class JsEngine {
 	
@@ -15,26 +15,26 @@ public class JsEngine {
 
 	@Test
 	public void testMnemonic() throws Exception {
-		String mnemonic = getMnemonic(SignTx.PRVK_FROM);
+		String mnemonic = BIP39.entropyToMnemonic(SignTx.PRVK_FROM);
 		assertNotNull(mnemonic);
 		assertEquals(MNEMONIC, mnemonic, MNEMONIC);
 	}
 
 	@Test
 	public void testEntropy() throws Exception {
-		String entropy = getEntropy(MNEMONIC);
+		String entropy = BIP39.mnemonicToEntropy(MNEMONIC);
 		assertNotNull(entropy);
 		assertEquals(SignTx.PRVK_FROM, entropy, SignTx.PRVK_FROM);
 	}
 
 	@Test
 	public void testBothEntropyAndMnemonic() throws Exception {
-		String mnemonic = getMnemonic(SignTx.PRVK_FROM);
-		String entropy = getEntropy(mnemonic);
+		String mnemonic = BIP39.entropyToMnemonic(SignTx.PRVK_FROM);
+		String entropy = BIP39.mnemonicToEntropy(mnemonic);
 		assertEquals("Original must equals entropy", SignTx.PRVK_FROM, entropy);
 		
-		entropy = getEntropy(MNEMONIC);
-		mnemonic = getMnemonic(entropy);
+		entropy = BIP39.mnemonicToEntropy(MNEMONIC);
+		mnemonic = BIP39.entropyToMnemonic(entropy);
 		assertEquals("Original must equals mnemonic", MNEMONIC, mnemonic);
 	}
 
@@ -49,22 +49,6 @@ public class JsEngine {
 		byte[] dataWithAES = AES.encrypt(data, key);
 		byte[] dataToVerify = AES.decrypt(dataWithAES, key);
 		
-		assertArrayEquals(dataWithAES, dataToVerify);
-	}
-
-	private String getEntropy(String mnemonic) throws Exception {
-		StringBuilder sb = new StringBuilder();
-		sb.append("var entropy = window.hd.bip39.mnemonicToEntropy('");
-		sb.append(mnemonic);
-		sb.append("');");
-		return JavaScript.ENGINE_MEW.executeAndGetValue(sb, "entropy");
-	}
-
-	private String getMnemonic(String entropy) throws Exception {
-		StringBuilder sb = new StringBuilder();
-		sb.append("var mnemonic = window.hd.bip39.entropyToMnemonic('");
-		sb.append(entropy);
-		sb.append("');");
-		return JavaScript.ENGINE_MEW.executeAndGetValue(sb, "mnemonic");
+		assertArrayEquals(data, dataToVerify);
 	}
 }
