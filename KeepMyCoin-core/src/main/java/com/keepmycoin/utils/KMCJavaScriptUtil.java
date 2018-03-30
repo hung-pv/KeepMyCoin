@@ -41,7 +41,11 @@ public class KMCJavaScriptUtil {
 			script.append(additionalScript);
 		}
 		scriptEngine.eval(script.toString());
-		return scriptEngine.get(varName);
+		return varName == null ? null : scriptEngine.get(varName);
+	}
+	
+	public static void execute(String additionalScript, ScriptEngine scriptEngine) throws Exception {
+		executeAndGetValue(null, additionalScript, scriptEngine);
 	}
 	
 	public static String buildJavaScriptArray(byte[] buffer) {

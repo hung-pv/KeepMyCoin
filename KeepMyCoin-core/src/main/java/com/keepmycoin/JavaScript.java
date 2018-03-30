@@ -17,15 +17,15 @@ public class JavaScript {
 		try {
 			engine = KMCJavaScriptUtil.setupNewScriptEngine("aes256-engine", "aes256-ext");
 		} catch (Exception e) {
-			log.fatal("Unable to load JS engine for AES", e);
+			log.fatal("Unable to load JS engine of AES", e);
 			System.exit(1);
 		}
 		ENGINE_AES = engine;
 		engine = null;
 		try {
-			engine = KMCJavaScriptUtil.setupNewScriptEngine("etherwallet-master");
+			engine = KMCJavaScriptUtil.setupNewScriptEngine("etherwallet-master", "mew-ext");
 		} catch (Exception e) {
-			log.fatal("Unable to load JS engine for AES", e);
+			log.fatal("Unable to load JS engine of MEW", e);
 			System.exit(1);
 		}
 		ENGINE_MEW = engine;

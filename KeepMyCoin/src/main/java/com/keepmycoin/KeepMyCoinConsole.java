@@ -16,7 +16,6 @@ import com.keepmycoin.exception.OSNotImplementedException;
 import com.keepmycoin.utils.KMCClipboardUtil;
 import com.keepmycoin.utils.KMCFileUtil;
 import com.keepmycoin.utils.KMCInputUtil;
-import com.keepmycoin.utils.Validator;
 
 public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 
