@@ -40,6 +40,12 @@ public class KMCNumberUtil {
 		return result;
 	}
 	
+	public static BigInteger fromHexToBigInteger(String hex) {
+		if (hex == null) return null;
+		if (hex.toLowerCase().startsWith("0x")) hex = hex.substring(2);
+		return new BigInteger(hex, 16);
+	}
+	
 	public static String fromBigValue(String bigValue, int decimal) {
 		while (bigValue.length() < decimal + 1) {
 			bigValue = "0" + bigValue;

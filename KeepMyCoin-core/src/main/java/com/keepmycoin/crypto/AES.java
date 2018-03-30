@@ -16,19 +16,19 @@ public class AES {
 	}
 
 	public static byte[] encrypt(byte[] data, byte[] key) throws Exception {
-		StringBuilder additionalScript = new StringBuilder();
-		additionalScript.append("var aesKey = ");
-		additionalScript.append(KMCJavaScriptUtil.buildJavaScriptArray(key));
-		additionalScript.append(";\n");
+		StringBuilder script = new StringBuilder();
+		script.append("var aesKey = ");
+		script.append(KMCJavaScriptUtil.buildJavaScriptArray(key));
+		script.append(";\n");
 		
-		additionalScript.append("var buffer = ");
-		additionalScript.append(KMCJavaScriptUtil.buildJavaScriptArray(data));
-		additionalScript.append(";\n");
+		script.append("var buffer = ");
+		script.append(KMCJavaScriptUtil.buildJavaScriptArray(data));
+		script.append(";\n");
 		
-		additionalScript.append("var encrypted = encryptAES(aesKey, buffer);");
+		script.append("var encrypted = encryptAES(aesKey, buffer);");
 		
-		Object result = KMCJavaScriptUtil.executeAndGetValue("encrypted", additionalScript.toString(), JavaScript.ENGINE_AES);
-		byte[] buffer = KMCStringUtil.parseHexBinary(String.valueOf(result));
+		String result = JavaScript.ENGINE_AES.executeAndGetValue(script, "encrypted");
+		byte[] buffer = KMCStringUtil.parseHexBinary(result);
 		return buffer;
 	}
 
@@ -37,18 +37,18 @@ public class AES {
 	}
 
 	public static byte[] decrypt(byte[] data, byte[] key) throws Exception {
-		StringBuilder additionalScript = new StringBuilder();
-		additionalScript.append("var aesKey = ");
-		additionalScript.append(KMCJavaScriptUtil.buildJavaScriptArray(key));
-		additionalScript.append(";\n");
+		StringBuilder script = new StringBuilder();
+		script.append("var aesKey = ");
+		script.append(KMCJavaScriptUtil.buildJavaScriptArray(key));
+		script.append(";\n");
 		
-		additionalScript.append("var buffer = ");
-		additionalScript.append(KMCJavaScriptUtil.buildJavaScriptArray(data));
-		additionalScript.append(";\n");
+		script.append("var buffer = ");
+		script.append(KMCJavaScriptUtil.buildJavaScriptArray(data));
+		script.append(";\n");
 		
-		additionalScript.append("var decrypted = decryptAES(aesKey, buffer);");
-		
-		String decrypted = String.valueOf(KMCJavaScriptUtil.executeAndGetValue("decrypted", additionalScript.toString(), JavaScript.ENGINE_AES));
+		script.append("var decrypted = decryptAES(aesKey, buffer);");
+
+		String decrypted = JavaScript.ENGINE_AES.executeAndGetValue(script, "decrypted");
 		String[] spl = decrypted.split("\\s*\\,\\s*");
 		byte[] result = new byte[spl.length];
 		for(int i = 0; i < spl.length; i++) {

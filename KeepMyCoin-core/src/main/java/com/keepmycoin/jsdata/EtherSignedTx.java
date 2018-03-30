@@ -25,6 +25,8 @@ public class EtherSignedTx {
 	private String signedTx;
 	@JsonProperty("isError")
 	private boolean isError;
+	@JsonProperty("e")
+	private String e;
 
 	@JsonGetter("nonce")
 	public String getNonce() {
@@ -114,5 +116,15 @@ public class EtherSignedTx {
 	@JsonSetter("isError")
 	public void setIsError(boolean isError) {
 		this.isError = isError;
+	}
+
+	@JsonGetter("e")
+	public String getE() {
+		return this.e;
+	}
+
+	@JsonSetter("e")
+	public void setE(String e) {
+		this.e = e;
 	}
 }
