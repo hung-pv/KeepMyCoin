@@ -140,6 +140,9 @@ public class KMCInputUtil {
 
 		while (true) {
 			input = getRawInput(null);
+			if (StringUtils.isBlank(input) && blankable) {
+				return null;
+			}
 			if (!blankable && StringUtils.isBlank(input)) {
 				if (name == null) {
 					o("Could not be empty, try again:");

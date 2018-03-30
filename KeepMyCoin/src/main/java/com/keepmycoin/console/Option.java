@@ -18,8 +18,8 @@ public class Option {
 	private Object[] methodArgs;
 	private Class<?>[] methodParameterTypes;
 
-	public Option(String displayText, String processMethod, Object...methodArgs) {
-		this.displayText = displayText;
+	public Option(CharSequence displayText, String processMethod, Object...methodArgs) {
+		this.displayText = displayText.toString();
 		this.processMethod = processMethod;
 		this.methodArgs = methodArgs;
 		this.methodParameterTypes = new Class<?>[this.methodArgs.length];

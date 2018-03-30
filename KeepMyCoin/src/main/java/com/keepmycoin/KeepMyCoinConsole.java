@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 
 import com.keepmycoin.console.MenuManager;
+import com.keepmycoin.data.Account;
 import com.keepmycoin.data.Wallet;
 import com.keepmycoin.exception.OSNotImplementedException;
 import com.keepmycoin.utils.KMCClipboardUtil;
@@ -153,6 +154,8 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		} else {
 			mm.add("Save a wallet", "saveAWallet");
 			mm.add("Read a wallet", "readAWallet");
+			mm.add("Save an account", "saveAnAccount");
+			mm.add("Read an account", "readAnAccount");
 		}
 
 		int selection = getMenuSelection(mm, "\n==========\n\nHello! Today is a beautiful day, what do want to do?");
@@ -168,8 +171,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 	}
 
 	@Override
-	protected void generateNewKeystore_confirmSavedMnemonic(String mnemonic, byte[] key,
-			String pwd) throws Exception {
+	protected void generateNewKeystore_confirmSavedMnemonic(String mnemonic, byte[] key, String pwd) throws Exception {
 		log.trace("generateNewKeystore_confirmSavedMnemonic");
 		while (!KMCInputUtil.confirm("Did you saved the mnemonic to somewhere?")) {
 			showMsg("Please carefully save it!");
@@ -181,8 +183,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 	}
 
 	@Override
-	protected void generateNewKeystore_confirmMnemonic(String mnemonic, byte[] key,
-			String pwd) throws Exception {
+	protected void generateNewKeystore_confirmMnemonic(String mnemonic, byte[] key, String pwd) throws Exception {
 		log.trace("generateNewKeystore_confirmMnemonic");
 		showMsg("For sure you already saved these seed words, you have to typing these words again:");
 		KMCInputUtil.requireConfirmation(mnemonic);
@@ -228,8 +229,8 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 	}
 
 	@Override
-	protected void saveAWallet_getInfo() throws Exception {
-		log.trace("saveAWallet_getInfo");
+	public void saveAWallet() throws Exception {
+		log.trace("saveAWallet");
 		MenuManager mm = new MenuManager();
 		for (WalletType wt : WalletType.values()) {
 			mm.add(wt.getDisplayText(), null);
@@ -259,8 +260,8 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		if (privateKey == null && mnemonic == null) {
 			showMsg("You must provide at least one information, Private Key or Mnemonic seed words");
 			if (KMCInputUtil.confirm("Do you understand?")) {
-				showMsg("OK, now let's do again");
-				saveAWallet_getInfo();
+				showMsg("OK, now let's do it again");
+				saveAWallet();
 				return;
 			}
 			KMCClipboardUtil.clear();
@@ -291,13 +292,12 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 	@Override
 	protected void readAWallet_choose(List<Wallet> wallets) throws Exception {
 		log.trace("readAWallet_choose");
-		int counter = 1;
 		MenuManager mm = new MenuManager();
 		for (Wallet w : wallets) {
-			mm.add(String.format(" %d. %s (%s)", counter++, w.getAddress(), w.getWalletType()), null);
+			mm.add(String.format(" %s (%s)", w.getAddress(), w.getWalletType()), "readAWallet_read", w);
 		}
 		int selection = getMenuSelection(mm, "Select a wallet");
-		readAWallet_read(wallets.get(selection - 1));
+		mm.getOptionBySelection(selection).processMethod(this);
 	}
 
 	@Override
@@ -306,7 +306,9 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		if (wallet == null)
 			return;
 		showMsg("* Address: %s", wallet.getAddress());
-		showMsg("* Note:\n%s", wallet.getPublicNote());
+		if (wallet.getPublicNote() != null) {
+			showMsg("* Note:\n%s", wallet.getPublicNote());
+		}
 		MenuManager mm = new MenuManager();
 		mm.add("Go back to main menu", null);
 		mm.add("Copy private key to clipboard", "readAWallet_action", wallet, "copy", "private key");
@@ -362,6 +364,128 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 	}
 
 	@Override
+	public void saveAnAccount() throws Exception {
+		log.trace("saveAnAccount");
+		showMsg("Website:");
+		showMsg("(press Enter to skip)");
+		String website = StringUtils.trimToNull(KMCInputUtil.getRawInput(null));
+
+		showMsg("Account name:");
+		String name = KMCInputUtil.getInput("Account Name", false, ".+", "Must not empty", null);
+
+		showMsg("Public note:");
+		showMsg("(press Enter to skip)");
+		String publicNote = StringUtils.trimToNull(KMCInputUtil.getRawInput(null));
+
+		KMCClipboardUtil.clear();
+		showMsg("NOTICE: Please DO NOT copy and paste password, just type it manually !!!");
+		showMsg("Password (will be encrypted):");
+		showMsg("(press Enter to skip)");
+		String password = StringUtils.trimToNull(KMCInputUtil.getRawInput(null));
+
+		KMCClipboardUtil.clear();
+		showMsg("NOTICE: Please DO NOT copy and paste 2fa private key, just type it manually !!!");
+		showMsg("2FA private key (will be encrypted):");
+		showMsg("(press Enter to skip)");
+		String priv2FA = KMCInputUtil.getInput("2fa private key", true, "^[aA-zZ0-9]{4,}$",
+				"Alphabet and numeric only, more than 4 characters", null);
+
+		showMsg("Private note (will be encrypted):");
+		showMsg("(press Enter to skip)");
+		String privateNote = StringUtils.trimToNull(KMCInputUtil.getRawInput(null));
+
+		saveAnAccount_saveInfo(name, website, publicNote, password, priv2FA, privateNote);
+	}
+
+	@Override
+	protected void readAnAccount_choose(List<Account> accounts) throws Exception {
+		log.trace("readAnAccount_choose");
+		MenuManager mm = new MenuManager();
+		for (Account a : accounts) {
+			StringBuilder option = new StringBuilder();
+			option.append(a.getName());
+			if (a.getWebsite() != null) {
+				option.append(" (");
+				option.append(a.getWebsite());
+				option.append(")");
+			}
+			if (a.getPublicNote() != null) {
+				option.append('\n');
+				option.append(a.getPublicNote());
+			}
+			mm.add(option.toString(), "readAnAccount_read", a);
+		}
+		int selection = getMenuSelection(mm, "Select an account");
+		mm.getOptionBySelection(selection).processMethod(this);
+	}
+
+	@Override
+	protected void readAnAccount_read(Account account) throws Exception {
+		log.trace("readAnAccount_read");
+		if (account == null)
+			return;
+		showMsg("* Name: %s", account.getName());
+		if (account.getWebsite() != null) {
+			showMsg("* Website: %s", account.getWebsite());
+		}
+		if (account.getPublicNote() != null) {
+			showMsg("* Note:\n%s", account.getPublicNote());
+		}
+		MenuManager mm = new MenuManager();
+		mm.add("Go back to main menu", null);
+		mm.add("Copy password to clipboard", "readAnAccount_action", account, "copy", "password");
+		mm.add("Copy 2fa to clipboard", "readAnAccount_action", account, "copy", "2fa");
+		mm.add("Show password", "readAnAccount_action", account, "show", "password");
+		mm.add("Show 2fa", "readAnAccount_action", account, "show", "2fa");
+		mm.add("Show private note", "readAnAccount_action", account, "show", "private note");
+		mm.add("Show ALL password, 2fa and also private note", "readAnAccount_action", account, "show", "all");
+
+		int selection = getMenuSelection(mm, "* What do want to do?");
+		mm.getOptionBySelection(selection).processMethod(this);
+	}
+
+	@SuppressWarnings("unused")
+	private void readAnAccount_action(Account account, String action, String target) throws Exception {
+		log.trace("readAnAccount_action");
+		if (target.equals("all")) {
+			String password = decryptUsingExistsKeystore(account.getEncryptedPasswordBuffer());
+			String _2fa = decryptUsingExistsKeystore(account.getEncrypted2FABuffer());
+			String privateNote = decryptUsingExistsKeystore(account.getEncryptedPrivateNoteBuffer());
+			if (action.equals("show")) {
+				if (password != null) {
+					showMsg("Password: %s", password);
+				} else {
+					showMsg("(Password does not exists)");
+				}
+				if (_2fa != null) {
+					showMsg("private 2FA: %s", _2fa);
+				} else {
+					showMsg("(2FA does not exists)");
+				}
+				if (privateNote != null) {
+					showMsg("Private note:\n%s", privateNote);
+				} else {
+					showMsg("(Private Note does not exists)");
+				}
+			}
+		} else {
+			String content = null;
+			if (target.equals("password")) {
+				content = decryptUsingExistsKeystore(account.getEncryptedPasswordBuffer());
+			} else if (target.equals("2fa")) {
+				content = decryptUsingExistsKeystore(account.getEncrypted2FABuffer());
+			} else if (target.equals("private note")) {
+				content = decryptUsingExistsKeystore(account.getEncryptedPrivateNoteBuffer());
+			}
+			if (action.equals("copy")) {
+				KMCClipboardUtil.setText(content, null);
+			} else if (action.equals("show")) {
+				showMsg("Here it is:\n%s", content);
+			}
+		}
+	}
+
+	@Override
 	protected void showMsg(String format, Object... args) {
 		System.out.println(String.format(format, args));
 	}
@@ -404,7 +528,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		}
 		try {
 			return Integer.parseInt(input);
-		} catch (Exception e) {
+		} catch (NumberFormatException e) {
 			return 0;
 		}
 	}

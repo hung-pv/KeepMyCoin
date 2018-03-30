@@ -18,7 +18,7 @@ public class App {
 
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			public void run() {
-				//KMCClipboardUtil.clear();
+				// KMCClipboardUtil.clear();
 			}
 		});
 
@@ -52,7 +52,12 @@ public class App {
 			}
 		}
 		Configuration.KMC_FOLDER = fixedKMCFolder;
-		
-		JavaScript.initialize();
+
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				JavaScript.initialize();
+			}
+		}).start();
 	}
 }

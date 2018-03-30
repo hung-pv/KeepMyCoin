@@ -47,7 +47,7 @@ public class KMCFileUtil {
 		return file.getName().toLowerCase().endsWith("." + ext.toLowerCase());
 	}
 
-	private static String[] candidateClassNames = new String[] { "KeyStore", "Wallet" };
+	private static String[] candidateClassNames = new String[] { "KeyStore", "Wallet", "Account", "Note" };
 
 	public static AbstractKMCData readFileToKMCData(File file) throws Exception {
 		if (file == null)
@@ -71,6 +71,9 @@ public class KMCFileUtil {
 	}
 
 	public static void writeFile(File file, String content, boolean readonly) throws Exception {
+		if (file.exists()) {
+			throw new RuntimeException("File already exists");
+		}
 		FileUtils.write(file, content, StandardCharsets.UTF_8);
 		if (readonly) {
 			setReadonlyQuietly(file);

@@ -34,7 +34,9 @@ public class KMCDevice {
 		File[] files = this.getFiles();
 		if (files != null && files.length > 0) {
 			for (File file : files) {
-				result.add(KMCFileUtil.readFileToKMCData(file));
+				AbstractKMCData kmcData = KMCFileUtil.readFileToKMCData(file);
+				if (kmcData != null)
+					result.add(kmcData);
 			}
 		}
 		return result;

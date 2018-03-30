@@ -11,11 +11,7 @@ public class MenuManager {
 		this.options.add(option);
 	}
 
-	public void add(String displayText, String processMethod) {
-		this.add(new Option(displayText, processMethod));
-	}
-
-	public void add(String displayText, String processMethod, Object...args) {
+	public void add(CharSequence displayText, String processMethod, Object...args) {
 		this.add(new Option(displayText, processMethod, args));
 	}
 

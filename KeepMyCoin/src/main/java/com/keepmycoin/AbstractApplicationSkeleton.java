@@ -9,6 +9,7 @@ import org.apache.commons.io.FileUtils;
 import com.keepmycoin.crypto.AES;
 import com.keepmycoin.crypto.BIP39;
 import com.keepmycoin.data.AbstractKMCData;
+import com.keepmycoin.data.Account;
 import com.keepmycoin.data.Wallet;
 import com.keepmycoin.exception.CryptoException;
 import com.keepmycoin.utils.KMCArrayUtil;
@@ -240,26 +241,18 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 		aes256Cipher = new AES(key);
 	}
 
-	@Override
-	public void saveAWallet() throws Exception {
-		log.trace("saveAWallet");
-		saveAWallet_getInfo();
-	}
-
-	protected abstract void saveAWallet_getInfo() throws Exception;
-
 	protected void saveAWallet_saveInfo(String address, String privateKey, WalletType walletType, String mnemonic,
 			String publicNote, String privateNote) throws Exception {
 		log.trace("saveAWallet_saveInfo");
-		byte[] privateKeyWithAES256Encrypted = encryptUsingExistsKeystore(privateKey);
-		byte[] mnemonicWithAES256Encrypted = encryptUsingExistsKeystore(mnemonic);
-		byte[] notePrivateWithAES256Encrypted = encryptUsingExistsKeystore(privateNote);
+		byte[] privateKeyWithAESEncrypted = encryptUsingExistsKeystore(privateKey);
+		byte[] mnemonicWithAESEncrypted = encryptUsingExistsKeystore(mnemonic);
+		byte[] notePrivateWithAESEncrypted = encryptUsingExistsKeystore(privateNote);
 
 		// Clear clip-board
 		KMCClipboardUtil.clear();
 
-		Wallet wallet = new Wallet(address, privateKeyWithAES256Encrypted, walletType.name(),
-				mnemonicWithAES256Encrypted, publicNote, notePrivateWithAES256Encrypted);
+		Wallet wallet = new Wallet(address, privateKeyWithAESEncrypted, walletType.name(),
+				mnemonicWithAESEncrypted, publicNote, notePrivateWithAESEncrypted);
 		wallet.addAdditionalInformation();
 		File file = dvc.getFile(String.format("%s.%s.%s", address, walletType.name(), Configuration.EXT_DEFAULT));
 		KMCFileUtil.writeFile(file, wallet);
@@ -280,6 +273,56 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 		readAWallet_choose(wallets);
 	}
 	
+	protected abstract void readAWallet_choose(List<Wallet> wallets) throws Exception;
+	
+	protected abstract void readAWallet_read(Wallet wallet) throws Exception;
+	
+	protected void saveAnAccount_saveInfo(String name, String website, String publicNote, String password, String priv2FA, String privateNote) throws Exception {
+		log.trace("saveAnAccount_saveInfo");
+		byte[] paswordWithAESEncrypted = encryptUsingExistsKeystore(password);
+		byte[] priv2faWithAESEncrypted = encryptUsingExistsKeystore(priv2FA);
+		byte[] privateNoteWithAESEncrypted = encryptUsingExistsKeystore(privateNote);
+
+		// Clear clip-board
+		KMCClipboardUtil.clear();
+
+		Account account = new Account(name, website, publicNote, paswordWithAESEncrypted, priv2faWithAESEncrypted, privateNoteWithAESEncrypted);
+		account.addAdditionalInformation();
+		
+		StringBuilder fileName = new StringBuilder();
+		fileName.append(KMCStringUtil.toPathChars(name));
+		if (website != null) {
+			fileName.append('.');
+			try {
+				fileName.append(KMCStringUtil.toPathChars(KMCStringUtil.getDomainName(website)));
+			} catch (Exception e) {
+				fileName.append("website");
+			}
+		}
+		
+		File file = dvc.getFile(String.format("%s.%s", fileName.toString(), Configuration.EXT_DEFAULT));
+		KMCFileUtil.writeFile(file, account);
+
+		showMsg("Saved account %s%s", name, website != null ? (" of " + website) : "");
+
+		askContinueOrExit(null);
+	}
+
+	@Override
+	public void readAnAccount() throws Exception {
+		log.trace("readAnAccount");
+		List<Account> accounts = AbstractKMCData.filter(this.dvc.getAllKMCFiles(), Account.class);
+		if (accounts.isEmpty()) {
+			showMsg("There is no account file! You will need to perform saving an account first");
+			return;
+		}
+		readAnAccount_choose(accounts);
+	}
+	
+	protected abstract void readAnAccount_choose(List<Account> accounts) throws Exception;
+	
+	protected abstract void readAnAccount_read(Account account) throws Exception;
+	
 	protected byte[] encryptUsingExistsKeystore(String data) throws Exception {
 		log.trace("encryptUsingExistsKeystore");
 		return aes256Cipher.encryptNullable(KMCStringUtil.getBytesNullable(data));
@@ -290,10 +333,6 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 		byte[] decrypted = aes256Cipher.decryptNullable(buffer);
 		return decrypted == null ? null : new String(decrypted, StandardCharsets.UTF_8);
 	}
-	
-	protected abstract void readAWallet_choose(List<Wallet> wallets) throws Exception;
-	
-	protected abstract void readAWallet_read(Wallet wallet) throws Exception;
 
 	protected abstract void showMsg(String format, Object... args);
 

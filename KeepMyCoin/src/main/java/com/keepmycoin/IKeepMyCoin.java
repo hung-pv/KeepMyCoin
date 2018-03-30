@@ -21,4 +21,12 @@ public interface IKeepMyCoin {
 	@RequiredKeystore
 	@Continue
 	void readAWallet() throws Exception;
+
+	@RequiredKeystore
+	@Continue
+	void saveAnAccount() throws Exception;
+
+	@RequiredKeystore
+	@Continue
+	void readAnAccount() throws Exception;
 }
