@@ -155,6 +155,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 			mm.add("Generate keystore", "generateNewKeystore");
 			mm.add("Restore keystore", "restoreKeystore");
 		} else {
+			mm.add("Sign a transaction", "signTransaction");
 			mm.add("Save a wallet", "saveAWallet");
 			mm.add("Read a wallet", "readAWallet");
 			mm.add("Save an account", "saveAnAccount");
@@ -490,6 +491,33 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 			} else if (action.equals("show")) {
 				showMsg("Here it is:\n%s", content);
 			}
+		}
+	}
+
+	@Override
+	public void signTransaction() throws Exception {
+		log.trace("signTransaction");
+		MenuManager mm = new MenuManager();
+		mm.add("Sign an Ethereum tx", "signSimpleEthereumTransaction");
+		mm.add("Sign an Contract ETH tx (on developing)", null);
+		int selection = getMenuSelection(mm, "Choose a type of transaction");
+		mm.getOptionBySelection(selection).processMethod(this);
+	}
+	
+	@SuppressWarnings("unused")
+	private void signSimpleEthereumTransaction() {
+		log.trace("signSimpleEthereumTransaction");
+		showMsg("From address:");
+		String from = KMCInputUtil.getInput("From address", false, "(0[xX])?[aA-zZ0-9]{40}", "Must be a valid ethereum address", null);
+		KMCInputUtil.requireConfirmation(from);
+		showMsg("To address:");
+		String to = KMCInputUtil.getInput("To address", false, "(0[xX])?[aA-fF0-9]{40}", "Must be a valid ethereum address", null);
+		KMCInputUtil.requireConfirmation(to);
+		if (from.equals(to)) {
+			showMsg("Sender and receiver could not be the same");
+			showMsg("(press Enter to continue)");
+			KMCInputUtil.getRawInput(null);
+			return;
 		}
 	}
 
