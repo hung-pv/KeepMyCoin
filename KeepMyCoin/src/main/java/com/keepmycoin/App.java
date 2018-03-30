@@ -55,6 +55,13 @@ public class App {
 		}
 		Configuration.KMC_FOLDER = fixedKMCFolder;
 
+		if (larg.stream().anyMatch(a -> a.startsWith("ext="))) {
+			String ext = larg.stream().filter(a -> a.startsWith("ext=")).findAny().get().split("=")[1];
+			if (StringUtils.isNotBlank(ext)) {
+				Configuration.EXT = ext;
+			}
+		}
+
 		new Thread(new Runnable() {
 			@Override
 			public void run() {

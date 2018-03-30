@@ -52,7 +52,8 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 					} else { // File
 						if (file.getName().equalsIgnoreCase(drive.getIdFile().getName())) {
 							continue FileOnDevice;
-						} else if (KMCFileUtil.isFileExt(file, Configuration.EXT_DEFAULT)
+						} else if (KMCFileUtil.isFileExt(file, Configuration.EXT)
+								|| KMCFileUtil.isFileExt(file, Configuration.EXT_DEFAULT) //
 								|| KMCFileUtil.isFileExt(file, "cmd") //
 								|| KMCFileUtil.isFileExt(file, "sh") //
 								|| KMCFileUtil.isFileExt(file, "jar")) {
@@ -147,6 +148,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 	@Override
 	protected void launchMenu() throws Exception {
 		log.trace("launchMenu");
+		TimeoutManager.renew();
 		MenuManager mm = new MenuManager();
 
 		if (!isKeystoreExists()) {
@@ -383,6 +385,8 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		showMsg("Password (will be encrypted):");
 		showMsg("(press Enter to skip)");
 		String password = StringUtils.trimToNull(KMCInputUtil.getRawInput(null));
+		if (password != null)
+			KMCInputUtil.requireConfirmation(password);
 
 		KMCClipboardUtil.clear();
 		showMsg("NOTICE: Please DO NOT copy and paste 2fa private key, just type it manually !!!");
@@ -390,11 +394,14 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		showMsg("(press Enter to skip)");
 		String priv2FA = KMCInputUtil.getInput("2fa private key", true, "^[aA-zZ0-9]{4,}$",
 				"Alphabet and numeric only, more than 4 characters", null);
+		if (priv2FA != null)
+			KMCInputUtil.requireConfirmation(priv2FA);
 
 		showMsg("Private note (will be encrypted):");
 		showMsg("(press Enter to skip)");
 		String privateNote = StringUtils.trimToNull(KMCInputUtil.getRawInput(null));
 
+		KMCClipboardUtil.clear();
 		saveAnAccount_saveInfo(name, website, publicNote, password, priv2FA, privateNote);
 	}
 

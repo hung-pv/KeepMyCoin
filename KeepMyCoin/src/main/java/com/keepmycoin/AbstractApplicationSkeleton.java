@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 
+import com.keepmycoin.TimeoutManager.ITimedOutListener;
 import com.keepmycoin.crypto.AES;
 import com.keepmycoin.crypto.BIP39;
 import com.keepmycoin.data.AbstractKMCData;
@@ -46,7 +47,17 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 	protected abstract void setupKMCDevice() throws Exception;
 
 	protected void setupSessionTimeOut() throws Exception {
-		//TODO implement
+		TimeoutManager.start(new ITimedOutListener() {
+			@Override
+			public void doNotify() {
+				onSessionTimedOut();
+			}
+		});
+	}
+	
+	protected void onSessionTimedOut() {
+		log.trace("onSessionTimedOut");
+		showMsg("Session timed out after %d seconds idle", Configuration.TIME_OUT_SEC);
 	}
 
 	@Override
@@ -255,7 +266,7 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 		Wallet wallet = new Wallet(address, privateKeyWithAESEncrypted, walletType.name(),
 				mnemonicWithAESEncrypted, publicNote, notePrivateWithAESEncrypted);
 		wallet.addAdditionalInformation();
-		File file = dvc.getFile(String.format("%s.%s.%s", address, walletType.name(), Configuration.EXT_DEFAULT));
+		File file = dvc.getFile(String.format("%s.%s.%s", address, walletType.name(), Configuration.EXT));
 		KMCFileUtil.writeFile(file, wallet);
 
 		showMsg("Saved %s", address);
@@ -301,7 +312,7 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 			}
 		}
 		
-		File file = dvc.getFile(String.format("%s.%s", fileName.toString(), Configuration.EXT_DEFAULT));
+		File file = dvc.getFile(String.format("%s.%s", fileName.toString(), Configuration.EXT));
 		KMCFileUtil.writeFile(file, account);
 
 		showMsg("Saved account %s%s", name, website != null ? (" of " + website) : "");

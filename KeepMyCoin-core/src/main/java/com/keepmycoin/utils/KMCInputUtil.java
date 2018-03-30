@@ -6,12 +6,15 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.keepmycoin.TimeoutManager;
+
 public class KMCInputUtil {
 
 	private static final Console csl = System.console();
 	private static final Scanner in = new Scanner(System.in);
 
 	public static String getRawInput(String ask) {
+		TimeoutManager.renew();
 		if (csl == null) {
 			if (ask != null)
 				o(ask);
@@ -21,6 +24,7 @@ public class KMCInputUtil {
 	}
 
 	public static String getInput(String ask, int maxLength) {
+		TimeoutManager.renew();
 		String input;
 		if (csl != null) {
 			input = ask == null ? csl.readLine() : csl.readLine(ask);

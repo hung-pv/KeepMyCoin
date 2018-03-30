@@ -9,7 +9,9 @@ public class Configuration {
 	public static boolean MODE_CONSOLE;
 	public static File KMC_FOLDER;
 	public static final String EXT_DEFAULT = "kmc";
+	public static String EXT = EXT_DEFAULT;
 	public static final String KEYSTORE_NAME = new String(Base64.getDecoder().decode("S0VFUF9USElTX1NBRkUua21j"),
 			StandardCharsets.UTF_8);
 	public static final double APP_VERSION = 0.2;
+	public static final int TIME_OUT_SEC = 180;
 }
