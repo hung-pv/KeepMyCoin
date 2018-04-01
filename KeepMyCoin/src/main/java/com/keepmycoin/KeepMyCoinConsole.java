@@ -10,6 +10,11 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 
+import com.keepmycoin.blockchain.EthereumBlockChain;
+import com.keepmycoin.blockchain.ITransactionInput;
+import com.keepmycoin.blockchain.IUnlockMethod;
+import com.keepmycoin.blockchain.SimpleEthereumTransactionInput;
+import com.keepmycoin.blockchain.UnlockByPrivateKey;
 import com.keepmycoin.console.MenuManager;
 import com.keepmycoin.data.Account;
 import com.keepmycoin.data.Wallet;
@@ -18,6 +23,14 @@ import com.keepmycoin.exception.OSNotImplementedException;
 import com.keepmycoin.utils.KMCClipboardUtil;
 import com.keepmycoin.utils.KMCFileUtil;
 import com.keepmycoin.utils.KMCInputUtil;
+import com.keepmycoin.validator.ERC20BlockChainValidator;
+import com.keepmycoin.validator.IBlockChainValidator;
+import com.keepmycoin.validator.IValidator;
+import com.keepmycoin.validator.ValidateMustBeDouble;
+import com.keepmycoin.validator.ValidateMustBeInteger;
+import com.keepmycoin.validator.ValidateNumberNotNegative;
+import com.keepmycoin.validator.crypto.eth.ValidateEthAddress;
+import com.keepmycoin.validator.crypto.eth.ValidatorEthPrivateKey;
 
 public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 
@@ -375,7 +388,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		String website = StringUtils.trimToNull(KMCInputUtil.getRawInput(null));
 
 		showMsg("Account name:");
-		String name = KMCInputUtil.getInput("Account Name", false, ".+", "Must not empty", null);
+		String name = KMCInputUtil.getInput("Account Name", false, null);
 
 		showMsg("Public note:");
 		showMsg("(press Enter to skip)");
@@ -393,8 +406,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		showMsg("NOTICE: Please DO NOT copy and paste 2fa private key, just type it manually !!!");
 		showMsg("2FA private key (will be encrypted):");
 		showMsg("(press Enter to skip)");
-		String priv2FA = KMCInputUtil.getInput("2fa private key", true, "^[aA-zZ0-9]{4,}$",
-				"Alphabet and numeric only, more than 4 characters", null);
+		String priv2FA = KMCInputUtil.getInput2faPrivateKey();
 		if (priv2FA != null)
 			KMCInputUtil.requireConfirmation(priv2FA);
 
@@ -505,17 +517,34 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 	}
 
 	@SuppressWarnings("unused")
-	private void signSimpleEthereumTransaction() {
+	private void signSimpleEthereumTransaction(Wallet wallet) {
 		log.trace("signSimpleEthereumTransaction");
-		showMsg("To address:");
-		String to = KMCInputUtil.getInput("To address", false, "(0[xX])?[aA-fF0-9]{40}",
-				"Must be a valid ethereum address", null);
-		KMCInputUtil.requireConfirmation(to);
+		
+		String from = null, privKey = null;
+		if (wallet != null) {
+			if (!wallet.is(WalletType.ERC20)) {
+				throw new RuntimeException("Not an ERC20 wallet");
+			}
+			from = StringUtils.trimToNull(wallet.getAddress());
+			privKey = decryptUsingExistsKeystore(wallet.getEncryptedPrivateKeyBuffer());
+		}
+		IValidator<String> validatorEthAddress = new ValidateEthAddress();
+		IValidator<String> validatorEthPrivKey = new ValidatorEthPrivateKey();
 
-		showMsg("From address:");
-		String from = KMCInputUtil.getInput("From address", false, "(0[xX])?[aA-zZ0-9]{40}",
-				"Must be a valid ethereum address", null);
-		KMCInputUtil.requireConfirmation(from);
+		if (from == null) {
+			showMsg("From address:");
+			from = KMCInputUtil.getInput("From address", false, null, validatorEthAddress);
+			KMCInputUtil.requireConfirmation(from);
+		}
+		if (privKey == null) {
+			showMsg("Private key:");
+			privKey = KMCInputUtil.getInput("Private key", false, null, validatorEthPrivKey);
+			KMCInputUtil.requireConfirmation(privKey);
+		}
+
+		showMsg("To address:");
+		String to = KMCInputUtil.getInput("To address", false, null, validatorEthAddress);
+		KMCInputUtil.requireConfirmation(to);
 
 		if (from.equals(to)) {
 			showMsg("Sender and receiver could not be the same");
@@ -524,22 +553,37 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 			return;
 		}
 
-		int nonce = KMCInputUtil.getInt("Nonce: ");
+		showMsg("Nonce:");
+		int nonce = KMCInputUtil.getInput("Nonce", false, input -> new Integer(Integer.parseInt(input)), //
+				new ValidateMustBeInteger(), new ValidateNumberNotNegative<Integer>()).intValue();
 		
-		double amtEthTransfer = KMCInputUtil.getInput("ETH amount", false, "\\d+(\\.\\d+)?", "Must be double",
-				input -> Double.valueOf(input).doubleValue());
-		
+
+		double amtEthTransfer = KMCInputUtil.getInput("ETH amount", false, input -> new Double(Double.valueOf(input).doubleValue()), //
+				new ValidateMustBeDouble(), new ValidateNumberNotNegative<Double>());
+
 		int gasLimit = 21000;
 		showMsg("Gas limit:");
 		showMsg("(default %s, press Enter to skip)", gasLimit);
-		String tmp = KMCInputUtil.getInput("Gas limit", true, "\\d+", "Must be integer", null);
+		// "\\d+", "Must be integer"
+		Integer tmp = KMCInputUtil.getInput("Gas limit", true, input -> new Integer(Integer.parseInt(input)), //
+				new ValidateMustBeInteger(), new ValidateNumberNotNegative<Integer>());
 		if (tmp != null) {
-			gasLimit = Integer.parseInt(tmp);
+			gasLimit = tmp.intValue();
 		}
-		
-		int gasPrice = 41;
+
+		int gwei = 41;
 		showMsg("Gas price in Gwei:");
 		showMsg("(default %s Gwei, press Enter to skip)", gasLimit);
+		tmp = KMCInputUtil.getInput("Gas price", true, input -> new Integer(Integer.parseInt(input)), //
+				new ValidateMustBeInteger(), new ValidateNumberNotNegative<Integer>());
+		if (tmp != null) {
+			gwei = tmp.intValue();
+		}
+		
+		EthereumBlockChain ebc = new EthereumBlockChain();
+		ITransactionInput input = new SimpleEthereumTransactionInput(from, to, amtEthTransfer, nonce, gwei, gasLimit);
+		IUnlockMethod unlock = new UnlockByPrivateKey(PRVK_FROM);
+		return ebc.signSimpleTransaction(input, unlock);
 	}
 
 	@Override

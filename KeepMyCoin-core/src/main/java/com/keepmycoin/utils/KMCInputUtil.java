@@ -2,11 +2,12 @@ package com.keepmycoin.utils;
 
 import java.io.Console;
 import java.util.Scanner;
-import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
 import com.keepmycoin.TimeoutManager;
+import com.keepmycoin.validator.IValidator;
+import com.keepmycoin.validator.ValidateRegex;
 
 public class KMCInputUtil {
 
@@ -131,18 +132,25 @@ public class KMCInputUtil {
 			return getInt(ask == null ? "Again: " : ask);
 		}
 	}
-
+	
 	public static String getInput2faPrivateKey() {
-		return getInput("2fa private key", true, "^[aA-zZ0-9]{4,}$",
-				"Alphabet and numeric only, more than 4 characters", null);
+		return  getInput("2fa private key", true, null, new ValidateRegex() {
+			@Override
+			public String describleWhenInvalid() {
+				return "Alphabet and numeric only, more than 4 characters";
+			}
+			@Override
+			public String getPattern() {
+				return "^[aA-zZ0-9]{4,}$";
+			}} , null);
 	}
 
-	@SuppressWarnings("unchecked")
-	public static <RC> RC getInput(String name, boolean blankable, String regexPattern, String descripbleRegexPattern,
-			IConvert<RC> converter) {
+	@SuppressWarnings({ "unchecked", "unused", "rawtypes" })
+	public static <RC> RC getInput(String name, boolean blankable, IConvert<RC> converter, IValidator<?>... validators) {
+		// String regexPattern, String descripbleRegexPattern,
 		String input;
 
-		while (true) {
+		M: while (true) {
 			input = getRawInput(null);
 			if (StringUtils.isBlank(input) && blankable) {
 				return null;
@@ -153,19 +161,12 @@ public class KMCInputUtil {
 				} else {
 					o("%s could not be empty, try again:", name);
 				}
-				continue;
+				continue M;
 			}
-			if (regexPattern != null && regexPattern.length() > 0) {
-				if (!Pattern.matches(regexPattern, input)) {
-					String additinalInfo = name == null ? "" : " of " + name;
-					if (descripbleRegexPattern == null) {
-						o("Invalid format%s, please try again:", additinalInfo);
-					} else {
-						o("Invalid format%s !!!", additinalInfo);
-						o(descripbleRegexPattern);
-						o("Please try again:");
-					}
-					continue;
+			V: for (IValidator iValidator : validators) {
+				if (!iValidator.isValid(input)) {
+					o(getMessageWhenInputInvalid(name, iValidator.describleWhenInvalid()));
+					continue M;
 				}
 			}
 			break;
@@ -178,20 +179,29 @@ public class KMCInputUtil {
 		return (RC) input;
 	}
 
+	private static String getMessageWhenInputInvalid(String name, String describle) {
+
+		StringBuilder sb = new StringBuilder();
+		sb.append("Invalid format");
+		if (name != null) {
+			sb.append(" of ");
+			sb.append(name);
+		}
+		if (describle == null) {
+			sb.append(", please try again:");
+		} else {
+			sb.append(" !!!\n");
+			sb.append(describle);
+			sb.append("\\nPlease try again:");
+		}
+		return sb.toString();
+	}
+
 	private static void o(String pattern, Object... params) {
 		System.out.println(String.format(pattern, params));
 	}
 
 	public static interface IConvert<TC> {
 		TC convert(String input);
-	}
-
-	public static interface IValidator<TC> {
-		default boolean isValid(String input) {
-			return true;
-		}
-		default boolean isValidPattern(String input, String regexPattern) {
-			return Pattern.matches(regexPattern, input);
-		}
 	}
 }

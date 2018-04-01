@@ -85,6 +85,21 @@ public class Wallet extends AbstractKMCData {
 		return this.walletType;
 	}
 
+	@JsonIgnore
+	public WalletType getWalletTypeEnum() {
+		try {
+			return WalletType.valueOf(this.walletType);
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	@JsonIgnore
+	public boolean is(WalletType type) {
+		WalletType wt = getWalletTypeEnum();
+		return wt != null && wt == type;
+	}
+
 	@JsonSetter("walletType")
 	public void setWalletType(String walletType) {
 		this.walletType = walletType;
