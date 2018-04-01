@@ -503,22 +503,43 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		int selection = getMenuSelection(mm, "Choose a type of transaction");
 		mm.getOptionBySelection(selection).processMethod(this);
 	}
-	
+
 	@SuppressWarnings("unused")
 	private void signSimpleEthereumTransaction() {
 		log.trace("signSimpleEthereumTransaction");
-		showMsg("From address:");
-		String from = KMCInputUtil.getInput("From address", false, "(0[xX])?[aA-zZ0-9]{40}", "Must be a valid ethereum address", null);
-		KMCInputUtil.requireConfirmation(from);
 		showMsg("To address:");
-		String to = KMCInputUtil.getInput("To address", false, "(0[xX])?[aA-fF0-9]{40}", "Must be a valid ethereum address", null);
+		String to = KMCInputUtil.getInput("To address", false, "(0[xX])?[aA-fF0-9]{40}",
+				"Must be a valid ethereum address", null);
 		KMCInputUtil.requireConfirmation(to);
+
+		showMsg("From address:");
+		String from = KMCInputUtil.getInput("From address", false, "(0[xX])?[aA-zZ0-9]{40}",
+				"Must be a valid ethereum address", null);
+		KMCInputUtil.requireConfirmation(from);
+
 		if (from.equals(to)) {
 			showMsg("Sender and receiver could not be the same");
 			showMsg("(press Enter to continue)");
 			KMCInputUtil.getRawInput(null);
 			return;
 		}
+
+		int nonce = KMCInputUtil.getInt("Nonce: ");
+		
+		double amtEthTransfer = KMCInputUtil.getInput("ETH amount", false, "\\d+(\\.\\d+)?", "Must be double",
+				input -> Double.valueOf(input).doubleValue());
+		
+		int gasLimit = 21000;
+		showMsg("Gas limit:");
+		showMsg("(default %s, press Enter to skip)", gasLimit);
+		String tmp = KMCInputUtil.getInput("Gas limit", true, "\\d+", "Must be integer", null);
+		if (tmp != null) {
+			gasLimit = Integer.parseInt(tmp);
+		}
+		
+		int gasPrice = 41;
+		showMsg("Gas price in Gwei:");
+		showMsg("(default %s Gwei, press Enter to skip)", gasLimit);
 	}
 
 	@Override

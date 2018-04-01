@@ -185,4 +185,13 @@ public class KMCInputUtil {
 	public static interface IConvert<TC> {
 		TC convert(String input);
 	}
+
+	public static interface IValidator<TC> {
+		default boolean isValid(String input) {
+			return true;
+		}
+		default boolean isValidPattern(String input, String regexPattern) {
+			return Pattern.matches(regexPattern, input);
+		}
+	}
 }
