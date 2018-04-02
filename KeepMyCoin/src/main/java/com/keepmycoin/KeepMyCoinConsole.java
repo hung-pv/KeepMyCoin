@@ -356,6 +356,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 				showMsg("Here it is:\n%s", content);
 			}
 		}
+		pressEnterToContinue();
 	}
 
 	@Override

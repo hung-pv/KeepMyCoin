@@ -1,1 +1,0 @@
-java -jar export/AddPrjDependency.jar "KeepMyCoin-core" "KeepMyCoin"
