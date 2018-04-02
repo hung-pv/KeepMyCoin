@@ -96,7 +96,7 @@ public class KMCStringUtil {
 		return domain.startsWith("www.") ? domain.substring(4) : domain;
 	}
 
-	private static final SimpleDateFormat sdf = new SimpleDateFormat("ddMMyy HH:mm:ss");
+	private static final SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yy HH:mm:ss");
 
 	public static String convertDateTimeToString(Date date) {
 		return sdf.format(date);

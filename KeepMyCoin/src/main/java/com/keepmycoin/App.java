@@ -15,6 +15,7 @@ public class App {
 
 	public static void main(String[] args) throws Exception {
 		log.debug("App launch");
+		System.out.println(String.format("KMC version: %f", Configuration.APP_VERSION));
 		initialize(args);
 		log.debug("initialize done");
 

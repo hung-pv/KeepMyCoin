@@ -4,7 +4,7 @@
 	<groupId>com.keepmycoin</groupId>
 	<artifactId>KeepMyCoin</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0</version>
+	<version>1.1</version>
 	<name>KeepMyCoin</name>
 	<url>http://keepmycoin.com</url>
 
@@ -26,11 +26,6 @@
 			<groupId>log4j</groupId>
 			<artifactId>log4j</artifactId>
 			<version>1.2.17</version>
-		</dependency>
-		<dependency>
-			<groupId>commons-logging</groupId>
-			<artifactId>commons-logging</artifactId>
-			<version>1.2</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/junit/junit -->
 		<dependency>
@@ -72,6 +67,12 @@
 				<activeByDefault>true</activeByDefault>
 			</activation>
 			<build>
+				<resources>
+					<resource>
+						<directory>src/main/resources</directory>
+						<filtering>true</filtering>
+					</resource>
+				</resources>
 				<plugins>
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
@@ -95,6 +96,26 @@
 								<goals>
 									<goal>single</goal>
 								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>properties-maven-plugin</artifactId>
+						<version>1.0.0</version>
+						<executions>
+							<execution>
+								<goals>
+									<goal>set-system-properties</goal>
+								</goals>
+								<configuration>
+									<properties>
+										<property>
+											<name>kmc.version</name>
+											<value>1.0</value>
+										</property>
+									</properties>
+								</configuration>
 							</execution>
 						</executions>
 					</plugin>
