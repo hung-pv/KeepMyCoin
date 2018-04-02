@@ -5,15 +5,19 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 
 import com.keepmycoin.TimeoutManager.ITimedOutListener;
 import com.keepmycoin.crypto.AES;
 import com.keepmycoin.crypto.BIP39;
 import com.keepmycoin.data.AbstractKMCData;
 import com.keepmycoin.data.Account;
+import com.keepmycoin.data.KeyStore;
 import com.keepmycoin.data.Wallet;
 import com.keepmycoin.data.Wallet.WalletType;
 import com.keepmycoin.exception.CryptoException;
+import com.keepmycoin.exception.OSNotImplementedException;
 import com.keepmycoin.utils.KMCArrayUtil;
 import com.keepmycoin.utils.KMCClipboardUtil;
 import com.keepmycoin.utils.KMCFileUtil;
@@ -25,7 +29,7 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 			.getLogger(AbstractApplicationSkeleton.class);
 
 	protected KMCDevice dvc = new KMCDevice(Configuration.KMC_FOLDER);
-	protected AES aes256Cipher = null;
+	protected AES aes = null;
 
 	protected void preLaunch() throws Exception {
 		log.trace("preLaunch");
@@ -38,11 +42,67 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 				setupKMCDevice();
 			}
 		}
-		
+
 		setupSessionTimeOut();
 	}
 
-	protected abstract void findKMCDevice() throws Exception;
+	protected void findKMCDevice() {
+		log.trace("findKMCDevice");
+		if (!SystemUtils.IS_OS_WINDOWS) {
+			throw new OSNotImplementedException("detecting KMC Device");
+		}
+		List<File> roots = KMCFileUtil.getFileRoots();
+		Device: for (File root : roots) {
+			KMCDevice drive = new KMCDevice(root);
+			if (!drive.isValid()) {
+				continue Device;
+			}
+			try {
+				File[] listOfFiles = root.listFiles();
+				FileOnDevice: for (File file : listOfFiles) {
+					if (file.isDirectory()) {
+						if ("kmc".equalsIgnoreCase(file.getName()) //
+								|| "blind".equalsIgnoreCase(file.getName())//
+								|| file.isHidden()) {
+							continue FileOnDevice;
+						}
+						showMsg("KMC Device %s should not contains any directory, except 'kmc' for application and related files",
+								root.getAbsolutePath());
+						showMsg("SKIP this device");
+						continue Device;
+					} else { // File
+						if (file.getName().equalsIgnoreCase(drive.getIdFile().getName())) {
+							continue FileOnDevice;
+						} else if (KMCFileUtil.isFileExt(file, Configuration.EXT)
+								|| KMCFileUtil.isFileExt(file, Configuration.EXT_DEFAULT) //
+								|| KMCFileUtil.isFileExt(file, "cmd") //
+								|| KMCFileUtil.isFileExt(file, "sh") //
+								|| KMCFileUtil.isFileExt(file, "jar")) {
+							continue FileOnDevice;
+						} else if (file.getName().equalsIgnoreCase(Configuration.KEYSTORE_NAME)) {
+							showMsg("WARNING: Found keystore file '%s' on your KMC Device",
+									Configuration.KEYSTORE_NAME);
+							showMsg("You should NOT save it here");
+							showMsg("Push it to cloud storage service like Google Drive, Drop Box, Mediafire,...");
+							showMsg("When need that file, download and save it to your local computer");
+							continue FileOnDevice;
+						} else {
+							showMsg("KMC Device '%s' should not contains any file except *.%s so this device will be SKIPPED",
+									root.getAbsolutePath(), Configuration.EXT_DEFAULT);
+							continue Device;
+						}
+					}
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+				continue Device;
+			}
+			this.dvc = new KMCDevice(root);
+			log.debug("KMC Device had been set to " + root.getAbsolutePath());
+			return;
+		}
+		this.dvc = new KMCDevice(null);
+	}
 
 	protected abstract void setupKMCDevice() throws Exception;
 
@@ -54,7 +114,7 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 			}
 		});
 	}
-	
+
 	protected void onSessionTimedOut() {
 		log.trace("onSessionTimedOut");
 		showMsg("Session timed out after %d seconds idle", Configuration.TIME_OUT_SEC);
@@ -126,16 +186,16 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 		generateNewKeystore_confirmSavedMnemonic(mnemonic, key, pwd);
 	}
 
-	protected abstract void generateNewKeystore_confirmSavedMnemonic(String mnemonic, byte[] key, String pwd) throws Exception;
+	protected abstract void generateNewKeystore_confirmSavedMnemonic(String mnemonic, byte[] key, String pwd)
+			throws Exception;
 
-	protected abstract void generateNewKeystore_confirmMnemonic(String mnemonic, byte[] key,
-			String pwd) throws Exception;
+	protected abstract void generateNewKeystore_confirmMnemonic(String mnemonic, byte[] key, String pwd)
+			throws Exception;
 
-	protected void generateNewKeystore_save(String mnemonic, byte[] key, String pwd)
-			throws Exception {
+	protected void generateNewKeystore_save(String mnemonic, byte[] key, String pwd) throws Exception {
 		log.trace("generateNewKeystore_save");
 		// Write file
-		KeystoreManager.save(AES.encrypt(key, pwd));
+		KeystoreManager.save(AES.encrypt(key, pwd), KMCArrayUtil.checksumValue(key));
 
 		showMsg("Keystore created successfully");
 
@@ -175,8 +235,7 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 			key = AES.decrypt(keyWithAES, passPharse);
 
 			if (cacheSeedWordsLength > 0) {
-				String mnemonicFromUsbID = new String(AES.decrypt(usbIdContent, passPharse),
-						StandardCharsets.UTF_8);
+				String mnemonicFromUsbID = new String(AES.decrypt(usbIdContent, passPharse), StandardCharsets.UTF_8);
 				if (!mnemonic.trim().equals(mnemonicFromUsbID.trim())) {
 					showMsg("Incorrect! You have to check your seed words and your passphrase then try again!\n" + //
 							"Hint: seed contains %d words", cacheSeedWordsLength);
@@ -192,7 +251,7 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 			return;
 		}
 
-		KeystoreManager.save(keyWithAES);
+		KeystoreManager.save(keyWithAES, KMCArrayUtil.checksumValue(key));
 		showMsg("Keystore restored successfully");
 
 		// Write MEMORIZE
@@ -224,7 +283,7 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 	@Override
 	public void loadKeystore() throws Exception {
 		log.trace("loadKeystore");
-		if (aes256Cipher != null) {
+		if (aes != null) {
 			return;
 		}
 		File fKeystore = KeystoreManager.getKeystoreFile();
@@ -242,15 +301,26 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 
 	protected void loadKeystore_processUsingPasspharse(String passpharse) throws Exception {
 		log.trace("loadKeystore_processUsingPasspharse");
-		byte[] keyWithAES = KeystoreManager.getEncryptedKey();
+		KeyStore ks = KeystoreManager.readKeyStore();
+		byte[] keyWithAES = ks.getEncryptedKeyBuffer();
+		String checksumFromFile = StringUtils.trimToNull(ks.getChecksum());
 		byte[] key = null;
 		try {
 			key = AES.decrypt(keyWithAES, passpharse);
 		} catch (CryptoException e) {
 			showMsg("Incorrect passphrase");
-			System.exit(1);
+			loadKeystore_getPasspharse();
+			return;
 		}
-		aes256Cipher = new AES(key);
+		if (checksumFromFile != null) {
+			String checksumVerify = KMCArrayUtil.checksumValue(key);
+			if (!checksumVerify.equals(checksumFromFile)) {
+				showMsg("Incorrect passphrase");
+				loadKeystore_getPasspharse();
+				return;
+			}
+		}
+		aes = new AES(key);
 	}
 
 	protected void saveAWallet_saveInfo(String address, String privateKey, WalletType walletType, String mnemonic,
@@ -263,8 +333,8 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 		// Clear clip-board
 		KMCClipboardUtil.clear();
 
-		Wallet wallet = new Wallet(address, privateKeyWithAESEncrypted, walletType.name(),
-				mnemonicWithAESEncrypted, publicNote, notePrivateWithAESEncrypted);
+		Wallet wallet = new Wallet(address, privateKeyWithAESEncrypted, walletType.name(), mnemonicWithAESEncrypted,
+				publicNote, notePrivateWithAESEncrypted);
 		wallet.addAdditionalInformation();
 		File file = dvc.getFile(String.format("%s.%s.%s", address, walletType.name(), Configuration.EXT));
 		KMCFileUtil.writeFile(file, wallet);
@@ -284,12 +354,13 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 		}
 		readAWallet_choose(wallets);
 	}
-	
+
 	protected abstract void readAWallet_choose(List<Wallet> wallets) throws Exception;
-	
+
 	protected abstract void readAWallet_read(Wallet wallet) throws Exception;
-	
-	protected void saveAnAccount_saveInfo(String name, String website, String publicNote, String password, String priv2FA, String privateNote) throws Exception {
+
+	protected void saveAnAccount_saveInfo(String name, String website, String publicNote, String password,
+			String priv2FA, String privateNote) throws Exception {
 		log.trace("saveAnAccount_saveInfo");
 		byte[] paswordWithAESEncrypted = encryptUsingExistsKeystore(password);
 		byte[] priv2faWithAESEncrypted = encryptUsingExistsKeystore(priv2FA);
@@ -298,9 +369,10 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 		// Clear clip-board
 		KMCClipboardUtil.clear();
 
-		Account account = new Account(name, website, publicNote, paswordWithAESEncrypted, priv2faWithAESEncrypted, privateNoteWithAESEncrypted);
+		Account account = new Account(name, website, publicNote, paswordWithAESEncrypted, priv2faWithAESEncrypted,
+				privateNoteWithAESEncrypted);
 		account.addAdditionalInformation();
-		
+
 		StringBuilder fileName = new StringBuilder();
 		fileName.append(KMCStringUtil.toPathChars(name));
 		if (website != null) {
@@ -311,7 +383,7 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 				fileName.append("website");
 			}
 		}
-		
+
 		File file = dvc.getFile(String.format("%s.%s", fileName.toString(), Configuration.EXT));
 		KMCFileUtil.writeFile(file, account);
 
@@ -330,19 +402,19 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 		}
 		readAnAccount_choose(accounts);
 	}
-	
+
 	protected abstract void readAnAccount_choose(List<Account> accounts) throws Exception;
-	
+
 	protected abstract void readAnAccount_read(Account account) throws Exception;
-	
+
 	protected byte[] encryptUsingExistsKeystore(String data) throws Exception {
 		log.trace("encryptUsingExistsKeystore");
-		return aes256Cipher.encryptNullable(KMCStringUtil.getBytesNullable(data));
+		return aes.encryptNullable(KMCStringUtil.getBytesNullable(data));
 	}
-	
+
 	protected String decryptUsingExistsKeystore(byte[] buffer) throws Exception {
 		log.trace("decryptUsingExistsKeystore");
-		byte[] decrypted = aes256Cipher.decryptNullable(buffer);
+		byte[] decrypted = aes.decryptNullable(buffer);
 		return decrypted == null ? null : new String(decrypted, StandardCharsets.UTF_8);
 	}
 

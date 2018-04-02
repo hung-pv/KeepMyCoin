@@ -1,5 +1,6 @@
 package com.keepmycoin.utils;
 
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
@@ -16,5 +17,17 @@ public class KMCArrayUtil {
 			result[i] = arr[i] & 0xFF;
 		}
 		return result;
+	}
+	
+	public static byte[] checksum(byte[] buffer) throws Exception {
+		MessageDigest digest = MessageDigest.getInstance("SHA-256");
+		digest.update(buffer);
+		return digest.digest();
+	}
+	
+	public static String checksumValue(byte[] buffer) throws Exception {
+		MessageDigest digest = MessageDigest.getInstance("SHA-256");
+		digest.update(buffer);
+		return KMCStringUtil.printHexBinary(digest.digest());
 	}
 }

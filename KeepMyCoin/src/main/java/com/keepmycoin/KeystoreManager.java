@@ -22,19 +22,19 @@ public class KeystoreManager {
 		return FILE_AES_KEYSTORE.exists();
 	}
 
-	public static void save(byte[] keyWithBIP39Encode) throws Exception {
+	public static void save(byte[] keyWithAES, String checkSum) throws Exception {
 		KeyStore ks = new KeyStore();
 		ks.addAdditionalInformation();
-		ks.setEncryptedKeyBuffer(keyWithBIP39Encode);
+		ks.setEncryptedKeyBuffer(keyWithAES);
+		ks.setChecksum(checkSum);
 		KMCFileUtil.writeFile(FILE_AES_KEYSTORE, ks);
 	}
 
-	public static byte[] getEncryptedKey() throws Exception {
+	public static KeyStore readKeyStore() throws Exception {
 		String content = FileUtils.readFileToString(FILE_AES_KEYSTORE, StandardCharsets.UTF_8);
 		if (StringUtils.isBlank(content)) {
 			return null;
 		}
-		KeyStore ks = KMCJsonUtil.parse(content, KeyStore.class);
-		return ks.getEncryptedKeyBuffer();
+		return KMCJsonUtil.parse(content, KeyStore.class);
 	}
 }

@@ -2,6 +2,7 @@ package com.keepmycoin;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,7 +24,6 @@ import com.keepmycoin.data.AbstractKMCData;
 import com.keepmycoin.data.Account;
 import com.keepmycoin.data.Wallet;
 import com.keepmycoin.data.Wallet.WalletType;
-import com.keepmycoin.exception.OSNotImplementedException;
 import com.keepmycoin.utils.KMCClipboardUtil;
 import com.keepmycoin.utils.KMCFileUtil;
 import com.keepmycoin.utils.KMCInputUtil;
@@ -47,75 +47,46 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 	}
 
 	@Override
-	protected void findKMCDevice() throws Exception {
-		log.trace("findKMCDevice");
-		if (!SystemUtils.IS_OS_WINDOWS) {
-			throw new OSNotImplementedException("detecting KMC Device");
-		}
-		List<File> roots = KMCFileUtil.getFileRoots();
-		Device: for (File root : roots) {
-			KMCDevice drive = new KMCDevice(root);
-			if (!drive.isValid()) {
-				continue Device;
-			}
-			try {
-				File[] listOfFiles = root.listFiles();
-				FileOnDevice: for (File file : listOfFiles) {
-					if (file.isDirectory()) {
-						showMsg("KMC Device %s should not contains any directory", root.getAbsolutePath());
-						showMsg("SKIP this device");
-						continue Device;
-					} else { // File
-						if (file.getName().equalsIgnoreCase(drive.getIdFile().getName())) {
-							continue FileOnDevice;
-						} else if (KMCFileUtil.isFileExt(file, Configuration.EXT)
-								|| KMCFileUtil.isFileExt(file, Configuration.EXT_DEFAULT) //
-								|| KMCFileUtil.isFileExt(file, "cmd") //
-								|| KMCFileUtil.isFileExt(file, "sh") //
-								|| KMCFileUtil.isFileExt(file, "jar")) {
-							continue FileOnDevice;
-						} else if (file.getName().equalsIgnoreCase(Configuration.KEYSTORE_NAME)) {
-							showMsg("WARNING: Found keystore file '%s' on your KMC Device",
-									Configuration.KEYSTORE_NAME);
-							showMsg("You should NOT save it here");
-							showMsg("Push it to cloud storage service like Google Drive, Drop Box, Mediafire,...");
-							showMsg("When need that file, download and save it to your local computer");
-							continue FileOnDevice;
-						} else {
-							showMsg("KMC Device '%s' should not contains any file except *.%s so this device will be SKIPPED",
-									root.getAbsolutePath(), Configuration.EXT_DEFAULT);
-							continue Device;
-						}
-					}
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-				continue Device;
-			}
-			this.dvc = new KMCDevice(root);
-			log.debug("KMC Device had been set to " + root.getAbsolutePath());
-			return;
-		}
-		this.dvc = new KMCDevice(null);
-	}
-
-	@Override
 	protected void setupKMCDevice() throws Exception {
 		log.trace("setupKMCDevice");
 		showMsg("Welcome, today is beautiful to see you :)");
 		showMsg("How to setup:");
 		showMsg(" 1. Prepare a new USB, format it, make sure it already cleared, no file remain");
-		showMsg(" ... Press Enter to continue ...");
-		KMCInputUtil.getRawInput(null);
+		pressEnterToContinue();
 		showMsg(" 2. Plug it in your computer");
-		showMsg(" ... Press Enter to continue ...");
+		pressEnterToContinue();
 		KMCInputUtil.getRawInput(null);
 		showMsg("Now I will list some devices that are detected from your computer");
-		showMsg(" ... Press Enter to continue ...");
+		pressEnterToContinue();
 		KMCInputUtil.getRawInput(null);
 
-		List<File> fValidRoots = KMCFileUtil.getFileRoots().stream().filter(r -> r.listFiles().length == 0)
-				.collect(Collectors.toList());
+		List<File> fValidRoots = KMCFileUtil.getFileRoots().stream().filter(r -> {
+			if (r.listFiles().length == 0) {
+				return true;
+			}
+			return !Arrays.asList(r.listFiles()).stream().filter(f -> !f.isDirectory()).findFirst().isPresent();
+		}).collect(Collectors.toList());
+		if (!fValidRoots.isEmpty()) {
+			List<File> permissionRestrictedRoots = fValidRoots.stream().filter(r -> !r.canRead() || !r.canWrite())
+					.collect(Collectors.toList());
+			if (!permissionRestrictedRoots.isEmpty()) {
+				showMsg("The following device%s %s currently restricted read / write access",
+						permissionRestrictedRoots.size() > 1 ? "s" : "",
+						permissionRestrictedRoots.size() > 1 ? "are" : "is");
+				for (File root : permissionRestrictedRoots) {
+					String permissionName = null;
+					if (!root.canRead() && !root.canWrite()) {
+						permissionName = "read/write";
+					} else if (!root.canRead()) {
+						permissionName = "read";
+					} else if (!root.canWrite()) {
+						permissionName = "write";
+					}
+					showMsg("%s has restricted %s access", root.getAbsolutePath(), permissionName);
+				}
+				fValidRoots.removeAll(permissionRestrictedRoots);
+			}
+		}
 		if (fValidRoots.isEmpty()) {
 			showMsg("There is no USB device meet conditions, please check again");
 			showMsg("Make sure it is completely EMPTY");
@@ -259,16 +230,16 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		WalletType wt = WalletType.values()[selection - 1];
 
 		showMsg("Enter your private key (will be encrypted):");
-		showMsg("(press Enter to skip)");
+		pressEnterToSkip();
 		String privateKey;
 		if (wt == WalletType.ERC20) {
-			privateKey = KMCInputUtil.getInput("Private key", false, null, new ValidatorEthPrivateKey());			
+			privateKey = KMCInputUtil.getInput("Private key", false, null, new ValidatorEthPrivateKey());
 		} else {
-			privateKey = StringUtils.trimToNull(KMCInputUtil.getPassword(null));	
+			privateKey = StringUtils.trimToNull(KMCInputUtil.getPassword(null));
 		}
 
 		showMsg("Enter your mnemonic (will be encrypted):");
-		showMsg("(press Enter to skip)");
+		pressEnterToSkip();
 		String mnemonic = StringUtils.trimToNull(KMCInputUtil.getInput("Mnemonic", true, null, new ValidateMnemonic()));
 
 		if (privateKey == null && mnemonic == null) {
@@ -299,11 +270,11 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		}
 
 		showMsg("PRIVATE note - this content can NOT be changed later (optional, will be encrypted):");
-		showMsg("(press Enter to skip)");
+		pressEnterToSkip();
 		String privateNote = StringUtils.trimToNull(KMCInputUtil.getRawInput(null));
 
 		showMsg("PUBLIC note - this content can NOT be changed later (optional, will not be encrypted so should not contains private information):");
-		showMsg("(press Enter to skip)");
+		pressEnterToSkip();
 		String publicNote = StringUtils.trimToNull(KMCInputUtil.getRawInput(null));
 
 		saveAWallet_saveInfo(address, privateKey, wt, mnemonic, publicNote, privateNote);
@@ -329,6 +300,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		if (wallet.getPublicNote() != null) {
 			showMsg("* Note:\n%s", wallet.getPublicNote());
 		}
+		pressEnterToContinue();
 		MenuManager mm = new MenuManager();
 		mm.add("Go back to main menu", null);
 		if (wallet.is(WalletType.ERC20)) {
@@ -390,20 +362,20 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 	public void saveAnAccount() throws Exception {
 		log.trace("saveAnAccount");
 		showMsg("Website:");
-		showMsg("(press Enter to skip)");
+		pressEnterToSkip();
 		String website = StringUtils.trimToNull(KMCInputUtil.getRawInput(null));
 
 		showMsg("Account name:");
 		String name = KMCInputUtil.getInput("Account Name", false, null);
 
 		showMsg("Public note:");
-		showMsg("(press Enter to skip)");
+		pressEnterToSkip();
 		String publicNote = StringUtils.trimToNull(KMCInputUtil.getRawInput(null));
 
 		KMCClipboardUtil.clear();
 		showMsg("NOTICE: Please DO NOT copy and paste password, just type it manually !!!");
 		showMsg("Password (will be encrypted):");
-		showMsg("(press Enter to skip)");
+		pressEnterToSkip();
 		String password = StringUtils.trimToNull(KMCInputUtil.getRawInput(null));
 		if (password != null)
 			KMCInputUtil.requireConfirmation(password);
@@ -411,13 +383,13 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		KMCClipboardUtil.clear();
 		showMsg("NOTICE: Please DO NOT copy and paste 2fa private key, just type it manually !!!");
 		showMsg("2FA private key (will be encrypted):");
-		showMsg("(press Enter to skip)");
+		pressEnterToSkip();
 		String priv2FA = KMCInputUtil.getInput2faPrivateKey();
 		if (priv2FA != null)
 			KMCInputUtil.requireConfirmation(priv2FA);
 
 		showMsg("Private note (will be encrypted):");
-		showMsg("(press Enter to skip)");
+		pressEnterToSkip();
 		String privateNote = StringUtils.trimToNull(KMCInputUtil.getRawInput(null));
 
 		KMCClipboardUtil.clear();
@@ -458,6 +430,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		if (account.getPublicNote() != null) {
 			showMsg("* Note:\n%s", account.getPublicNote());
 		}
+		pressEnterToContinue();
 		MenuManager mm = new MenuManager();
 		mm.add("Go back to main menu", null);
 		mm.add("Copy password to clipboard", "readAnAccount_action", account, "copy", "password");
@@ -510,6 +483,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 				showMsg("Here it is:\n%s", content);
 			}
 		}
+		pressEnterToContinue();
 	}
 
 	@Override
@@ -521,24 +495,24 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		int selection = getMenuSelection(mm, "Choose a type of transaction");
 		mm.getOptionBySelection(selection).processMethod(this);
 	}
-	
+
 	@SuppressWarnings("unused")
 	private void signSimpleEthereumTransaction() throws Exception {
 		log.trace("signSimpleEthereumTransaction");
 		MenuManager mm = new MenuManager();
 		mm.add("Manually input", "signSimpleEthereumTransactionForWallet");
 		AbstractKMCData.filter(this.dvc.getAllKMCFiles(), Wallet.class).stream()//
-		.filter(w -> w.is(WalletType.ERC20)).forEach(w -> {
-			mm.add(w.getAddress(), "signSimpleEthereumTransactionForWallet", w);
-		});
-		
+				.filter(w -> w.is(WalletType.ERC20)).forEach(w -> {
+					mm.add(w.getAddress(), "signSimpleEthereumTransactionForWallet", w);
+				});
+
 		mm.getOptionBySelection(getMenuSelection(mm, "Select a wallet:")).processMethod(this);
 	}
 
 	@SuppressWarnings("unused")
 	private void signSimpleEthereumTransactionForWallet(Wallet wallet) throws Exception {
 		log.trace("signSimpleEthereumTransactionForWallet(Wallet)");
-		
+
 		String from = null, privKey = null;
 		if (wallet != null) {
 			if (!wallet.is(WalletType.ERC20)) {
@@ -566,7 +540,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 
 		if (from.equals(to)) {
 			showMsg("Sender and receiver could not be the same");
-			showMsg("(press Enter to continue)");
+			showMsg("(press Enter to try again)");
 			KMCInputUtil.getRawInput(null);
 			return;
 		}
@@ -576,7 +550,8 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 				new ValidateMustBeInteger(), new ValidateNumberNotNegative<Integer>()).intValue();
 
 		showMsg("Amount of ETH to transfer:");
-		double amtEthTransfer = KMCInputUtil.getInput("ETH amount", false, input -> new Double(Double.valueOf(input).doubleValue()), //
+		double amtEthTransfer = KMCInputUtil.getInput("ETH amount", false,
+				input -> new Double(Double.valueOf(input).doubleValue()), //
 				new ValidateMustBeDouble(), new ValidateNumberNotNegative<Double>());
 
 		int gasLimit = 21000;
@@ -596,18 +571,18 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		if (tmp != null) {
 			gwei = tmp.intValue();
 		}
-		
+
 		IBlockChain bc = new EthereumBlockChain();
 		ITransactionInput input = new SimpleEthereumTransactionInput(from, to, amtEthTransfer, nonce, gwei, gasLimit);
 		IUnlockMethod unlock = new UnlockByPrivateKey(privKey);
-		
+
 		MenuManager mm = new MenuManager();
 		mm.add("Sign this transaction", "showSignedTransaction", bc, input, unlock);
 		mm.add("Re-make", "signSimpleEthereumTransactionForWallet", wallet);
 		mm.add("Cancel", null);
 		mm.getOptionBySelection(getMenuSelection(mm, "Sign it?")).processMethod(this);
 	}
-	
+
 	@SuppressWarnings("unused")
 	private void showSignedTransaction(IBlockChain bc, ITransactionInput input, IUnlockMethod unlock) throws Exception {
 		log.trace("showSignedTransaction");
@@ -620,6 +595,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 			showMsg("Signed Tx: %s", estx.getSignedTx());
 			KMCClipboardUtil.setText(estx.getSignedTx(), "SignedTX");
 		}
+		pressEnterToContinue();
 	}
 
 	@Override
@@ -668,6 +644,15 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		} catch (NumberFormatException e) {
 			return 0;
 		}
+	}
+
+	private void pressEnterToSkip() {
+		showMsg("(press Enter to skip)");
+	}
+
+	private void pressEnterToContinue() {
+		showMsg(" ... Press Enter to continue ...");
+		KMCInputUtil.getRawInput(null);
 	}
 
 	private int getMenuSelection(MenuManager mm, String msg) {

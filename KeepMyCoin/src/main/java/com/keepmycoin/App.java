@@ -33,6 +33,13 @@ public class App {
 
 	private static void initialize(String[] args) throws Exception {
 		log.trace("initialize");
+		
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				JavaScript.initialize();
+			}
+		}).start();
 
 		List<String> larg = Arrays.asList(args).stream().map(a -> a.trim()).filter(a -> a.length() > 0)
 				.collect(Collectors.toList());
@@ -61,12 +68,5 @@ public class App {
 				Configuration.EXT = ext;
 			}
 		}
-
-		new Thread(new Runnable() {
-			@Override
-			public void run() {
-				JavaScript.initialize();
-			}
-		}).start();
 	}
 }
