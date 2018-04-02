@@ -27,6 +27,7 @@ Test.java
 # Folder
 */bin/
 */target/
+/target/
 
 # Project
 .classpath
