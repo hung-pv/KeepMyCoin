@@ -50,6 +50,10 @@ import com.keepmycoin.validator.crypto.eth.ValidatorEthPrivateKey;
 public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 
 	private static final org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger(KeepMyCoinConsole.class);
+	
+	public KeepMyCoinConsole() {
+		Configuration.MODE_CONSOLE = true;
+	}
 
 	@Override
 	protected void preLaunch() throws Exception {

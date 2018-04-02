@@ -33,7 +33,7 @@ public class Configuration {
 	}
 
 	public static boolean DEBUG;
-	public static boolean MODE_CONSOLE;
+	public static boolean MODE_CONSOLE = false;
 	public static File KMC_FOLDER;
 	public static final String EXT_DEFAULT = "kmc";
 	public static String EXT = EXT_DEFAULT;
