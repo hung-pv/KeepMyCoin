@@ -28,6 +28,7 @@ import com.keepmycoin.utils.KMCClipboardUtil;
 import com.keepmycoin.utils.KMCFileUtil;
 import com.keepmycoin.utils.KMCInputUtil;
 import com.keepmycoin.validator.IValidator;
+import com.keepmycoin.validator.ValidateMnemonic;
 import com.keepmycoin.validator.ValidateMustBeDouble;
 import com.keepmycoin.validator.ValidateMustBeInteger;
 import com.keepmycoin.validator.ValidateNumberNotNegative;
@@ -268,18 +269,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 
 		showMsg("Enter your mnemonic (will be encrypted):");
 		showMsg("(press Enter to skip)");
-		String mnemonic;
-		while (true) {
-			mnemonic = StringUtils.trimToNull(KMCInputUtil.getRawInput(null));
-			if (mnemonic == null) {
-				break;
-			}
-			if (mnemonic.split("\\s").length % 12 != 0) {
-				showMsg("Mnemonic incorrect (can not devided by 12)");
-				showMsg("Again: ");
-				continue;
-			}
-		}
+		String mnemonic = StringUtils.trimToNull(KMCInputUtil.getInput("Mnemonic", true, null, new ValidateMnemonic()));
 
 		if (privateKey == null && mnemonic == null) {
 			showMsg("You must provide at least one information, Private Key or Mnemonic seed words");
@@ -341,6 +331,9 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		}
 		MenuManager mm = new MenuManager();
 		mm.add("Go back to main menu", null);
+		if (wallet.is(WalletType.ERC20)) {
+			mm.add("Sign a simple transaction", "signSimpleEthereumTransactionForWallet", wallet);
+		}
 		mm.add("Copy private key to clipboard", "readAWallet_action", wallet, "copy", "private key");
 		mm.add("Copy mnemonic to clipboard", "readAWallet_action", wallet, "copy", "mnemonic");
 		mm.add("Show private key", "readAWallet_action", wallet, "show", "private key");
