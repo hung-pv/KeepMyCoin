@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -13,31 +14,40 @@ import org.apache.commons.lang3.SystemUtils;
 import com.keepmycoin.Configuration;
 import com.keepmycoin.data.AbstractKMCData;
 
+import net.samuelcampos.usbdrivedetector.detectors.AbstractStorageDeviceDetector;
+
 public class KMCFileUtil {
 
 	private static final org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger(KMCFileUtil.class);
 
 	public static List<File> getFileRoots() {
-		if (!Configuration.DEBUG)
-			return Arrays.asList(File.listRoots());
-		List<File> roots = new ArrayList<>();
-		if (SystemUtils.IS_OS_WINDOWS) {
-			roots.add(new File("C:\\USB1"));
-			roots.add(new File("C:\\USB2"));
-		} else {
-			roots.add(new File("/tmp/USB1"));
-			roots.add(new File("/tmp/USB2"));
-		}
-		roots.forEach(f -> {
-			if (!f.exists()) {
-				try {
-					FileUtils.forceMkdir(f);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+		if (Configuration.DEBUG) {
+			List<File> roots = new ArrayList<>();
+			if (SystemUtils.IS_OS_WINDOWS) {
+				roots.add(new File("C:\\USB1"));
+				roots.add(new File("C:\\USB2"));
+			} else {
+				roots.add(new File("/tmp/USB1"));
+				roots.add(new File("/tmp/USB2"));
 			}
-		});
-		return roots;
+			roots.forEach(f -> {
+				if (!f.exists()) {
+					try {
+						FileUtils.forceMkdir(f);
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			});
+			return roots;
+		} else {
+			if (SystemUtils.IS_OS_WINDOWS) {
+				return Arrays.asList(File.listRoots());
+			} else {
+				return AbstractStorageDeviceDetector.getInstance().getStorageDevicesDevices().stream()
+						.map(d -> d.getRootDirectory()).collect(Collectors.toList());
+			}
+		}
 	}
 
 	public static boolean isFileExt(File file, String ext) {

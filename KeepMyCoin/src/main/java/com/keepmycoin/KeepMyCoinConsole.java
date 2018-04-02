@@ -61,7 +61,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		KMCInputUtil.getRawInput(null);
 
 		List<File> fValidRoots = KMCFileUtil.getFileRoots().stream().filter(r -> {
-			if (r.listFiles().length == 0) {
+			if (r.listFiles() == null || r.listFiles().length == 0) {
 				return true;
 			}
 			return !Arrays.asList(r.listFiles()).stream().filter(f -> !f.isDirectory()).findFirst().isPresent();
