@@ -30,6 +30,9 @@ public abstract class AbstractKMCData {
 	@JsonProperty("dataType")
 	private String dataType;
 
+	@JsonIgnore
+	private boolean empty;
+
 	@JsonGetter("msgWarning")
 	public String getMsgWarning() {
 		return "DO NOT change content of this file, any modification will corrupt this file and LOSING data FOREVER!";
@@ -78,6 +81,16 @@ public abstract class AbstractKMCData {
 	@JsonSetter("dataType")
 	public void setDataType(String dataType) {
 		this.dataType = dataType;
+	}
+	
+	@JsonIgnore
+	public void markEmpty() {
+		this.empty = true;
+	}
+	
+	@JsonIgnore
+	public boolean isEmpty() {
+		return this.empty;
 	}
 
 	@JsonIgnore

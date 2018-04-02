@@ -11,11 +11,15 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 
 import com.keepmycoin.blockchain.EthereumBlockChain;
+import com.keepmycoin.blockchain.EthereumSignedTransaction;
+import com.keepmycoin.blockchain.IBlockChain;
+import com.keepmycoin.blockchain.ISignedTransaction;
 import com.keepmycoin.blockchain.ITransactionInput;
 import com.keepmycoin.blockchain.IUnlockMethod;
 import com.keepmycoin.blockchain.SimpleEthereumTransactionInput;
 import com.keepmycoin.blockchain.UnlockByPrivateKey;
 import com.keepmycoin.console.MenuManager;
+import com.keepmycoin.data.AbstractKMCData;
 import com.keepmycoin.data.Account;
 import com.keepmycoin.data.Wallet;
 import com.keepmycoin.data.Wallet.WalletType;
@@ -23,8 +27,6 @@ import com.keepmycoin.exception.OSNotImplementedException;
 import com.keepmycoin.utils.KMCClipboardUtil;
 import com.keepmycoin.utils.KMCFileUtil;
 import com.keepmycoin.utils.KMCInputUtil;
-import com.keepmycoin.validator.ERC20BlockChainValidator;
-import com.keepmycoin.validator.IBlockChainValidator;
 import com.keepmycoin.validator.IValidator;
 import com.keepmycoin.validator.ValidateMustBeDouble;
 import com.keepmycoin.validator.ValidateMustBeInteger;
@@ -257,7 +259,12 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 
 		showMsg("Enter your private key (will be encrypted):");
 		showMsg("(press Enter to skip)");
-		String privateKey = StringUtils.trimToNull(KMCInputUtil.getPassword(null));
+		String privateKey;
+		if (wt == WalletType.ERC20) {
+			privateKey = KMCInputUtil.getInput("Private key", false, null, new ValidatorEthPrivateKey());			
+		} else {
+			privateKey = StringUtils.trimToNull(KMCInputUtil.getPassword(null));	
+		}
 
 		showMsg("Enter your mnemonic (will be encrypted):");
 		showMsg("(press Enter to skip)");
@@ -287,12 +294,18 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 
 		String address;
 		showMsg("Address (required, will not be encrypted):");
-		while (true) {
-			address = KMCInputUtil.getInput(null, 68);
-			if (KMCInputUtil.confirm("You sure? Please confirm this address again!")) {
-				break;
+
+		if (wt == WalletType.ERC20) {
+			address = KMCInputUtil.getInput("Address", false, null, new ValidateEthAddress());
+			KMCInputUtil.requireConfirmation(address);
+		} else {
+			while (true) {
+				address = KMCInputUtil.getInput(null, 68);
+				if (KMCInputUtil.confirm("You sure? Please confirm this address again!")) {
+					break;
+				}
+				showMsg("Address:");
 			}
-			showMsg("Address:");
 		}
 
 		showMsg("PRIVATE note - this content can NOT be changed later (optional, will be encrypted):");
@@ -515,10 +528,23 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		int selection = getMenuSelection(mm, "Choose a type of transaction");
 		mm.getOptionBySelection(selection).processMethod(this);
 	}
+	
+	@SuppressWarnings("unused")
+	private void signSimpleEthereumTransaction() throws Exception {
+		log.trace("signSimpleEthereumTransaction");
+		MenuManager mm = new MenuManager();
+		mm.add("Manually input", "signSimpleEthereumTransactionForWallet");
+		AbstractKMCData.filter(this.dvc.getAllKMCFiles(), Wallet.class).stream()//
+		.filter(w -> w.is(WalletType.ERC20)).forEach(w -> {
+			mm.add(w.getAddress(), "signSimpleEthereumTransactionForWallet", w);
+		});
+		
+		mm.getOptionBySelection(getMenuSelection(mm, "Select a wallet:")).processMethod(this);
+	}
 
 	@SuppressWarnings("unused")
-	private void signSimpleEthereumTransaction(Wallet wallet) {
-		log.trace("signSimpleEthereumTransaction");
+	private void signSimpleEthereumTransactionForWallet(Wallet wallet) throws Exception {
+		log.trace("signSimpleEthereumTransactionForWallet(Wallet)");
 		
 		String from = null, privKey = null;
 		if (wallet != null) {
@@ -539,7 +565,6 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		if (privKey == null) {
 			showMsg("Private key:");
 			privKey = KMCInputUtil.getInput("Private key", false, null, validatorEthPrivKey);
-			KMCInputUtil.requireConfirmation(privKey);
 		}
 
 		showMsg("To address:");
@@ -556,15 +581,14 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		showMsg("Nonce:");
 		int nonce = KMCInputUtil.getInput("Nonce", false, input -> new Integer(Integer.parseInt(input)), //
 				new ValidateMustBeInteger(), new ValidateNumberNotNegative<Integer>()).intValue();
-		
 
+		showMsg("Amount of ETH to transfer:");
 		double amtEthTransfer = KMCInputUtil.getInput("ETH amount", false, input -> new Double(Double.valueOf(input).doubleValue()), //
 				new ValidateMustBeDouble(), new ValidateNumberNotNegative<Double>());
 
 		int gasLimit = 21000;
 		showMsg("Gas limit:");
 		showMsg("(default %s, press Enter to skip)", gasLimit);
-		// "\\d+", "Must be integer"
 		Integer tmp = KMCInputUtil.getInput("Gas limit", true, input -> new Integer(Integer.parseInt(input)), //
 				new ValidateMustBeInteger(), new ValidateNumberNotNegative<Integer>());
 		if (tmp != null) {
@@ -573,17 +597,36 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 
 		int gwei = 41;
 		showMsg("Gas price in Gwei:");
-		showMsg("(default %s Gwei, press Enter to skip)", gasLimit);
+		showMsg("(default %s Gwei, press Enter to skip)", gwei);
 		tmp = KMCInputUtil.getInput("Gas price", true, input -> new Integer(Integer.parseInt(input)), //
 				new ValidateMustBeInteger(), new ValidateNumberNotNegative<Integer>());
 		if (tmp != null) {
 			gwei = tmp.intValue();
 		}
 		
-		EthereumBlockChain ebc = new EthereumBlockChain();
+		IBlockChain bc = new EthereumBlockChain();
 		ITransactionInput input = new SimpleEthereumTransactionInput(from, to, amtEthTransfer, nonce, gwei, gasLimit);
-		IUnlockMethod unlock = new UnlockByPrivateKey(PRVK_FROM);
-		return ebc.signSimpleTransaction(input, unlock);
+		IUnlockMethod unlock = new UnlockByPrivateKey(privKey);
+		
+		MenuManager mm = new MenuManager();
+		mm.add("Sign this transaction", "showSignedTransaction", bc, input, unlock);
+		mm.add("Re-make", "signSimpleEthereumTransactionForWallet", wallet);
+		mm.add("Cancel", null);
+		mm.getOptionBySelection(getMenuSelection(mm, "Sign it?")).processMethod(this);
+	}
+	
+	@SuppressWarnings("unused")
+	private void showSignedTransaction(IBlockChain bc, ITransactionInput input, IUnlockMethod unlock) throws Exception {
+		log.trace("showSignedTransaction");
+		ISignedTransaction stx = bc.signSimpleTransaction(input, unlock);
+		if (stx instanceof EthereumSignedTransaction) {
+			EthereumSignedTransaction estx = (EthereumSignedTransaction) stx;
+			showMsg("Transfer %s ETH", estx.getTransferAmt(18));
+			showMsg("From %s to %s", estx.getFrom(), estx.getTo());
+			showMsg("Gas price %d gwei, limit %d", estx.getGwei(), estx.getGasLimit());
+			showMsg("Signed Tx: %s", estx.getSignedTx());
+			KMCClipboardUtil.setText(estx.getSignedTx(), "SignedTX");
+		}
 	}
 
 	@Override

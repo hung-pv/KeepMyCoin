@@ -2,6 +2,7 @@ package com.keepmycoin.console;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 
 import com.keepmycoin.IKeepMyCoin;
 import com.keepmycoin.KeepMyCoinConsole;
@@ -21,10 +22,14 @@ public class Option {
 	public Option(CharSequence displayText, String processMethod, Object...methodArgs) {
 		this.displayText = displayText.toString();
 		this.processMethod = processMethod;
+		
+		if (Arrays.asList(methodArgs).stream().allMatch(a -> a == null)) {
+			methodArgs = new Object[0];
+		}
 		this.methodArgs = methodArgs;
 		this.methodParameterTypes = new Class<?>[this.methodArgs.length];
 		for(int i = 0; i < this.methodArgs.length; i++) {
-			this.methodParameterTypes[i] = this.methodArgs[i].getClass();
+			this.methodParameterTypes[i] = this.methodArgs[i] == null ? null : this.methodArgs[i].getClass();
 		}
 	}
 	

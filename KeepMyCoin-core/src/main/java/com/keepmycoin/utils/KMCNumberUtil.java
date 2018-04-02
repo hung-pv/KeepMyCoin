@@ -46,7 +46,8 @@ public class KMCNumberUtil {
 		return new BigInteger(hex, 16);
 	}
 	
-	public static String fromBigValue(String bigValue, int decimal) {
+	public static String fromBigValue(BigInteger bigInt, int decimal) {
+		String bigValue = bigInt.toString(10);
 		while (bigValue.length() < decimal + 1) {
 			bigValue = "0" + bigValue;
 		}

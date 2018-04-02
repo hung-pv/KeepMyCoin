@@ -2,6 +2,8 @@ package com.keepmycoin.blockchain;
 
 import java.math.BigInteger;
 
+import com.keepmycoin.utils.KMCNumberUtil;
+
 public abstract class AbstractSignedTransaction implements ISignedTransaction {
 	private String from;
 	private String to;
@@ -35,6 +37,10 @@ public abstract class AbstractSignedTransaction implements ISignedTransaction {
 
 	public BigInteger getTransferAmt() {
 		return transferAmt;
+	}
+
+	public String getTransferAmt(int noOfDownDigits) {
+		return KMCNumberUtil.fromBigValue(this.transferAmt, noOfDownDigits);
 	}
 
 	public void setTransferAmt(BigInteger transferAmt) {

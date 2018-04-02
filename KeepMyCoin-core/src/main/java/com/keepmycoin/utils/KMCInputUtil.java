@@ -164,9 +164,16 @@ public class KMCInputUtil {
 				continue M;
 			}
 			V: for (IValidator iValidator : validators) {
-				if (!iValidator.isValid(input)) {
-					o(getMessageWhenInputInvalid(name, iValidator.describleWhenInvalid()));
-					continue M;
+				if (iValidator instanceof ValidateRegex || converter == null) {
+					if (!iValidator.isValid(input)) {
+						o(getMessageWhenInputInvalid(name, iValidator.describleWhenInvalid()));
+						continue M;
+					}
+				} else {
+					if (!iValidator.isValid(converter.convert(input))) {
+						o(getMessageWhenInputInvalid(name, iValidator.describleWhenInvalid()));
+						continue M;
+					}
 				}
 			}
 			break;
