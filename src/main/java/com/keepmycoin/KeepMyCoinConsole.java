@@ -171,7 +171,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 	protected void generateNewKeystore_getInitPassPharse() throws Exception {
 		log.trace("generateNewKeystore_getInitPassPharse");
 		String pwd = KMCInputUtil.getPassword_required("Passphrase (up to 16 chars): ", Configuration.DEBUG ? 1 : 8);
-		KMCInputUtil.requireConfirmation(pwd);
+		KMCInputUtil.requireConfirmation(pwd, true);
 		generateNewKeystore_fromInitPassPharse(pwd);
 	}
 
@@ -230,6 +230,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 	protected void loadKeystore_getPasspharse() throws Exception {
 		log.trace("loadKeystore_getPasspharse");
 		String pwd = KMCInputUtil.getPassword_required("Passphrase: ", 1);
+		showMsg("Please wait...");
 		loadKeystore_processUsingPasspharse(pwd);
 	}
 

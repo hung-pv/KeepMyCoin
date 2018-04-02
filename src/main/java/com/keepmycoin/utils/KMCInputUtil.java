@@ -98,8 +98,17 @@ public class KMCInputUtil {
 	}
 
 	public static void requireConfirmation(String originalText) {
+		requireConfirmation(originalText, false);
+	}
+
+	public static void requireConfirmation(String originalText, boolean passwordMode) {
 		while (true) {
-			String confirm = getRawInput("Confirm: ");
+			String confirm;
+			if (passwordMode) {
+				confirm = getPassword("Confirm: ");
+			} else {
+				confirm = getRawInput("Confirm: ");
+			}
 			if (originalText == null && StringUtils.isEmpty(confirm))
 				return;
 			if (originalText.equals(confirm))
