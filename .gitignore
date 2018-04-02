@@ -28,6 +28,7 @@ Test.java
 */bin/
 */target/
 /target/
+target/
 
 # Project
 .classpath
