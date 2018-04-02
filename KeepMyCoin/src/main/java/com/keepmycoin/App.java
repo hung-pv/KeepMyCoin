@@ -47,7 +47,7 @@ public class App {
 		if (larg.size() < 1)
 			return;
 		Configuration.DEBUG = larg.contains("debug");
-		Configuration.MODE_CONSOLE = larg.contains("console") || larg.contains("c");
+		Configuration.MODE_CONSOLE = true;//larg.contains("console") || larg.contains("c");
 
 		File fixedKMCFolder = null;
 		if (larg.stream().anyMatch(a -> a.startsWith("kmc="))) {

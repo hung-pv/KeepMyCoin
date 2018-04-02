@@ -6,7 +6,21 @@
 	<packaging>jar</packaging>
 	<version>1.1</version>
 	<name>KeepMyCoin</name>
-	<url>http://keepmycoin.com</url>
+	<url>https://keepmycoin.com</url>
+
+	<developers>
+		<developer>
+			<id>HungPV</id>
+			<name>Pham Viet Hung</name>
+			<email>phamviethung.iot@gmail.com</email>
+			<url>https://keepmycoin.com</url>
+			<roles>
+				<role>architect</role>
+				<role>developer</role>
+			</roles>
+			<timezone>HaNoi GMT+7</timezone>
+		</developer>
+	</developers>
 
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>
@@ -96,26 +110,6 @@
 								<goals>
 									<goal>single</goal>
 								</goals>
-							</execution>
-						</executions>
-					</plugin>
-					<plugin>
-						<groupId>org.codehaus.mojo</groupId>
-						<artifactId>properties-maven-plugin</artifactId>
-						<version>1.0.0</version>
-						<executions>
-							<execution>
-								<goals>
-									<goal>set-system-properties</goal>
-								</goals>
-								<configuration>
-									<properties>
-										<property>
-											<name>kmc.version</name>
-											<value>1.0</value>
-										</property>
-									</properties>
-								</configuration>
 							</execution>
 						</executions>
 					</plugin>

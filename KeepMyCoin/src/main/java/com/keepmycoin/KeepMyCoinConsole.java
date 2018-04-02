@@ -647,11 +647,11 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		}
 	}
 
-	private void pressEnterToSkip() {
+	protected void pressEnterToSkip() {
 		showMsg("(press Enter to skip)");
 	}
 
-	private void pressEnterToContinue() {
+	protected void pressEnterToContinue() {
 		showMsg(" ... Press Enter to continue ...");
 		KMCInputUtil.getRawInput(null);
 	}

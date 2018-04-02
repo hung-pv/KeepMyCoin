@@ -350,6 +350,9 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 		List<Wallet> wallets = AbstractKMCData.filter(this.dvc.getAllKMCFiles(), Wallet.class);
 		if (wallets.isEmpty()) {
 			showMsg("There is no wallet file! You will need to perform saving a wallet first");
+			if (this instanceof KeepMyCoinConsole) {
+				((KeepMyCoinConsole)this).pressEnterToContinue();
+			}
 			return;
 		}
 		readAWallet_choose(wallets);
