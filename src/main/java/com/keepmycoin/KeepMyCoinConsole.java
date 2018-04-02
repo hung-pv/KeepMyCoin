@@ -71,10 +71,8 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		pressEnterToContinue();
 		showMsg(" 2. Plug it in your computer");
 		pressEnterToContinue();
-		KMCInputUtil.getRawInput(null);
 		showMsg("Now I will list some devices that are detected from your computer");
 		pressEnterToContinue();
-		KMCInputUtil.getRawInput(null);
 
 		List<File> fValidRoots = KMCFileUtil.getFileRoots().stream().filter(r -> {
 			if (r.listFiles() == null || r.listFiles().length == 0) {

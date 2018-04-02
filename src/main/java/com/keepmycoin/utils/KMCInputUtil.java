@@ -97,33 +97,6 @@ public class KMCInputUtil {
 		return pwd;
 	}
 
-	/*-
-	public static String getMnemonic(String msg) {
-		String mnemonic = StringUtils.trimToNull(KMCInputUtil.getRawInput(null));
-		if (mnemonic != null) {
-			if (mnemonic.split("\\s").length % 12 != 0) {
-				o("Mnemonic incorrect (can not devided by 12)");
-				return null;
-			}
-			return mnemonic;
-		}
-		return null;
-	}
-	
-	public static String getMnemonic_required(String msg) {
-		String mnemonic = getMnemonic(msg);
-		while (true) {
-			if (mnemonic == null) {
-				o("Can not be empty");
-				mnemonic = getMnemonic(msg == null ? "Again: " : msg);
-				continue;
-			}
-			break;
-		}
-		return mnemonic;
-	}
-	*/
-
 	public static void requireConfirmation(String originalText) {
 		while (true) {
 			String confirm = getRawInput("Confirm: ");
