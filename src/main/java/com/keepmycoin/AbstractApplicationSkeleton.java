@@ -18,7 +18,6 @@ import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.SystemUtils;
 
 import com.keepmycoin.TimeoutManager.ITimedOutListener;
 import com.keepmycoin.crypto.AES;
@@ -28,8 +27,6 @@ import com.keepmycoin.data.Account;
 import com.keepmycoin.data.KeyStore;
 import com.keepmycoin.data.Wallet;
 import com.keepmycoin.data.Wallet.WalletType;
-import com.keepmycoin.exception.CryptoException;
-import com.keepmycoin.exception.OSNotImplementedException;
 import com.keepmycoin.utils.KMCArrayUtil;
 import com.keepmycoin.utils.KMCClipboardUtil;
 import com.keepmycoin.utils.KMCFileUtil;
@@ -60,9 +57,6 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 
 	protected void findKMCDevice() {
 		log.trace("findKMCDevice");
-		if (!SystemUtils.IS_OS_WINDOWS) {
-			throw new OSNotImplementedException("detecting KMC Device");
-		}
 		List<File> roots = KMCFileUtil.getFileRoots();
 		Device: for (File root : roots) {
 			KMCDevice drive = new KMCDevice(root);
@@ -317,14 +311,7 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 		KeyStore ks = KeystoreManager.readKeyStore();
 		byte[] keyWithAES = ks.getEncryptedKeyBuffer();
 		String checksumFromFile = StringUtils.trimToNull(ks.getChecksum());
-		byte[] key = null;
-		try {
-			key = AES.decrypt(keyWithAES, passpharse);
-		} catch (CryptoException e) {
-			showMsg("Incorrect passphrase");
-			loadKeystore_getPasspharse();
-			return;
-		}
+		byte[] key = AES.decrypt(keyWithAES, passpharse);
 		if (checksumFromFile != null) {
 			String checksumVerify = KMCArrayUtil.checksumValue(key);
 			if (!checksumVerify.equals(checksumFromFile)) {

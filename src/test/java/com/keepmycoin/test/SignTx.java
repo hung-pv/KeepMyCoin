@@ -37,22 +37,28 @@ public class SignTx {
 	private static final int GWEI = 60;
 	private static final int GAS_LIMIT = 21000;
 	
+	private static final String SIGNED_TX = "0xf86c02850df847580082520894f5f3300d2021a81db40330d7761281b736abd56d880de0b6b3a7640000801ca090a040357148e41d5ca3043ed2bcc75b749253449d7daf0c3f1cb8b79626a405a01d5fe6c1dc473a2ef068f643e4b11f77587a7e1410899f9def890c4f219c703a";
+	
 	@Test
 	public void testSignSimpleEthTx() throws Exception {
 		EthereumSignedTransaction signedTx = (EthereumSignedTransaction)signSimpleEthTx();
 		assertNotNull(signedTx);
+		assertEquals(SIGNED_TX, signedTx.getSignedTx());
 	}
 	
 	@Test
 	public void testSignSimpleEthTxManually() throws Exception {
 		EtherSignedTx signedTx = signSimpleEthTxManually();
 		assertNotNull(signedTx);
+		assertEquals(SIGNED_TX, signedTx.getSignedTx());
 	}
 	
 	@Test
 	public void testSignSimpleEthTxWayMatches() throws Exception {
 		EthereumSignedTransaction signedTx1 = (EthereumSignedTransaction)signSimpleEthTx();
 		EtherSignedTx signedTx2 = signSimpleEthTxManually();
+		assertEquals(SIGNED_TX, signedTx1.getSignedTx());
+		assertEquals(SIGNED_TX, signedTx2.getSignedTx());
 		assertEquals("Signed tx from both ways need to be matched", signedTx1.getSignedTx(), signedTx2.getSignedTx());
 	}
 	

@@ -12,7 +12,9 @@
  *******************************************************************************/
 package com.keepmycoin.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import org.junit.Test;
 
@@ -20,32 +22,32 @@ import com.keepmycoin.crypto.AES;
 import com.keepmycoin.crypto.BIP39;
 
 public class JsEngine {
-	
-	private static final String MNEMONIC = "maid night clock rice destroy laugh sick stuff shy venture exhaust angle scare minute vast source diagram stereo cost recycle dose diesel only trend";
+
+	public static final String MNEMONIC = "maid night clock rice destroy laugh sick stuff shy venture exhaust angle scare minute vast source diagram stereo cost recycle dose diesel only trend";
 
 	@Test
 	public void testMnemonic() throws Exception {
 		String mnemonic = BIP39.entropyToMnemonic(SignTx.PRVK_FROM);
 		assertNotNull(mnemonic);
-		assertEquals(MNEMONIC, mnemonic, MNEMONIC);
+		assertEquals(MNEMONIC, mnemonic);
 	}
 
 	@Test
 	public void testEntropy() throws Exception {
 		String entropy = BIP39.mnemonicToEntropy(MNEMONIC);
 		assertNotNull(entropy);
-		assertEquals(SignTx.PRVK_FROM, entropy, SignTx.PRVK_FROM);
+		assertEquals(SignTx.PRVK_FROM, entropy);
 	}
 
 	@Test
 	public void testBothEntropyAndMnemonic() throws Exception {
 		String mnemonic = BIP39.entropyToMnemonic(SignTx.PRVK_FROM);
 		String entropy = BIP39.mnemonicToEntropy(mnemonic);
-		assertEquals("Original must equals entropy", SignTx.PRVK_FROM, entropy);
-		
+		assertEquals(SignTx.PRVK_FROM, entropy);
+
 		entropy = BIP39.mnemonicToEntropy(MNEMONIC);
 		mnemonic = BIP39.entropyToMnemonic(entropy);
-		assertEquals("Original must equals mnemonic", MNEMONIC, mnemonic);
+		assertEquals(MNEMONIC, mnemonic);
 	}
 
 	@Test
@@ -57,8 +59,11 @@ public class JsEngine {
 			data[i] = (byte) (i + 1);
 		}
 		byte[] dataWithAES = AES.encrypt(data, key);
+		assertArrayEquals(new byte[] { -91, -17, 87, 43, 72, 54, -102, //
+				-126, -67, 93, -40, 21, -2, 106, 34, 95, -4, -18,
+				73, -80, 68, -71, -98, -17, -1, -49, -93, //
+				-120, -105, -61, 62, 9 }, dataWithAES);
 		byte[] dataToVerify = AES.decrypt(dataWithAES, key);
-		
 		assertArrayEquals(data, dataToVerify);
 	}
 }

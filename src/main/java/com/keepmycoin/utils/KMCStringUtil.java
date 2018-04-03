@@ -22,8 +22,6 @@ import java.util.Formatter;
 
 import javax.xml.bind.DatatypeConverter;
 
-import org.apache.commons.lang3.StringUtils;
-
 public class KMCStringUtil {
 
 	public static byte[] getBytes(String text, int size) {
@@ -62,6 +60,10 @@ public class KMCStringUtil {
 
 	public static String beautiNumber(String number) {
 		String natural, decimal;
+		if (number.startsWith(".")) {
+			number = "0" + number;
+		}
+		number = number.replaceAll("\\,", "");
 		if (number.contains(".")) {
 			natural = number.substring(0, number.indexOf("."));
 			decimal = number.substring(number.indexOf("."));
@@ -90,16 +92,6 @@ public class KMCStringUtil {
 
 	public static String toPathChars(String original) {
 		return original.replaceAll("[^aA-zZ0-9_-]", "_");
-	}
-
-	public static String getSimpleCheckSum(String text) {
-		if (StringUtils.isBlank(text))
-			return "0000";
-		int sum = 0;
-		for (byte b : text.getBytes(StandardCharsets.UTF_8)) {
-			sum += b;
-		}
-		return toPathChars(String.valueOf(sum));
 	}
 
 	public static String getDomainName(String url) throws URISyntaxException {

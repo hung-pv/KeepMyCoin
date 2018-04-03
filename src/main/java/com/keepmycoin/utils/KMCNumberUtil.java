@@ -34,6 +34,9 @@ public class KMCNumberUtil {
 		if (!number.contains(".")) {
 			number = number + ".0";
 		}
+		if (number.endsWith(".")) {
+			number = number + "0";
+		}
 		String[] spl = number.split("\\.");
 		// 0: left - natural
 		// 1: right - decimal
@@ -41,7 +44,11 @@ public class KMCNumberUtil {
 		while (decimalPart.length() < decimal) {
 			decimalPart += "0";
 		}
-		return spl[0] + decimalPart;
+		String result = spl[0] + decimalPart;
+		while (result.startsWith("0")) {
+			result = result.substring(1);
+		}
+		return result;
 	}
 	
 	public static String convertBigIntegerToHex(BigInteger bi) {
@@ -55,6 +62,7 @@ public class KMCNumberUtil {
 	public static BigInteger fromHexToBigInteger(String hex) {
 		if (hex == null) return null;
 		if (hex.toLowerCase().startsWith("0x")) hex = hex.substring(2);
+		if (hex.toLowerCase().startsWith("x")) hex = hex.substring(1);
 		return new BigInteger(hex, 16);
 	}
 	
