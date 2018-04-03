@@ -24,12 +24,16 @@ public class TimeoutManager {
 		void doNotify();
 	}
 	
-	private static final Timer timer = new Timer();
+	private static Timer timer = null;
 	private static Date lastAction = Calendar.getInstance().getTime();
 	private static List<ITimedOutListener> timedoutListeners = new ArrayList<>();
 
 	public static void start(ITimedOutListener listener) {
+		if (timer != null) {
+			return;
+		}
 		timedoutListeners.add(listener);
+		timer = new Timer();
 		timer.schedule(new TimerTask() {
 			@Override
 			public void run() {

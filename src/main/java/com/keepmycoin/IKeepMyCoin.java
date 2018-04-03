@@ -28,6 +28,10 @@ public interface IKeepMyCoin {
 
 	@RequiredKeystore
 	@Continue
+	void signTransaction() throws Exception;
+
+	@RequiredKeystore
+	@Continue
 	void saveAWallet() throws Exception;
 
 	@RequiredKeystore
@@ -41,8 +45,4 @@ public interface IKeepMyCoin {
 	@RequiredKeystore
 	@Continue
 	void readAnAccount() throws Exception;
-
-	@RequiredKeystore
-	@Continue
-	void signTransaction() throws Exception;
 }

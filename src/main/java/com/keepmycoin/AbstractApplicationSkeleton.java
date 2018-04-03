@@ -119,6 +119,7 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 	protected abstract void setupKMCDevice() throws Exception;
 
 	protected void setupSessionTimeOut() throws Exception {
+		log.trace("setupSessionTimeOut");
 		TimeoutManager.start(new ITimedOutListener() {
 			@Override
 			public void doNotify() {

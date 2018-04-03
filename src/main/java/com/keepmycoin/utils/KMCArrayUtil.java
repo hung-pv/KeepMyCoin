@@ -38,8 +38,6 @@ public class KMCArrayUtil {
 	}
 	
 	public static String checksumValue(byte[] buffer) throws Exception {
-		MessageDigest digest = MessageDigest.getInstance("SHA-256");
-		digest.update(buffer);
-		return KMCStringUtil.printHexBinary(digest.digest());
+		return KMCStringUtil.printHexBinary(checksum(buffer));
 	}
 }

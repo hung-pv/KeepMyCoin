@@ -29,7 +29,13 @@ public class Configuration {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-		APP_VERSION = Double.parseDouble(props.getProperty("kmc.version"));
+		double appVersion;
+		try {
+			appVersion = Double.parseDouble(props.getProperty("kmc.version"));
+		} catch (NumberFormatException e) {
+			appVersion = 1.1;
+		}
+		APP_VERSION = appVersion;
 	}
 
 	public static boolean DEBUG;

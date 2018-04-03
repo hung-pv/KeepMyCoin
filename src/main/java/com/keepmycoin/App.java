@@ -31,16 +31,8 @@ public class App {
 		initialize(args);
 		log.debug("initialize done");
 
-		Runtime.getRuntime().addShutdownHook(new Thread() {
-			public void run() {
-				// KMCClipboardUtil.clear();
-			}
-		});
-
 		log.debug("Launch console/interface");
-		// IKeepMyCoin kmcProcessor = Configuration.MODE_CONSOLE ? new
-		// KeepMyCoinConsole() : new KeepMyCoinGUI();
-		IKeepMyCoin kmcProcessor = new KeepMyCoinConsole();
+		IKeepMyCoin kmcProcessor = new KeepMyCoinConsole(); // ? : new KeepMyCoinGUI();
 		kmcProcessor.launch();
 	}
 
