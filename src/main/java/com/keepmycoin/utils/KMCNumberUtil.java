@@ -15,6 +15,11 @@ package com.keepmycoin.utils;
 import java.math.BigInteger;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
+
+import com.keepmycoin.validator.ValidateMustBeDouble;
+
 public class KMCNumberUtil {
 
 	private static final Pattern P_VALID_EXPANDED_DOUBLE = Pattern.compile("^\\d+(\\.\\d+)?$");
@@ -67,14 +72,38 @@ public class KMCNumberUtil {
 	}
 	
 	public static String fromBigValue(BigInteger bigInt, int decimal) {
-		String bigValue = bigInt.toString(10);
-		while (bigValue.length() < decimal + 1) {
-			bigValue = "0" + bigValue;
+		return fromBigValue(bigInt.toString(10), decimal);
+	}
+	
+	public static String fromBigValue(String bigValue10, int decimal) {
+		if (bigValue10.startsWith(".")) {
+			bigValue10 = "0" + bigValue10;
 		}
-		String result = bigValue.substring(0, bigValue.length() - decimal) + "." + bigValue.substring(bigValue.length() - decimal);
-		while(result.contains(".") && (result.endsWith("0") || result.endsWith("."))) {
-			result = result.substring(0, result.length() - 1);
+		if (bigValue10.endsWith(".")) {
+			bigValue10 = bigValue10 + "0";
 		}
-		return result;
+		if (!new ValidateMustBeDouble().isValid(bigValue10)) {
+			throw new IllegalArgumentException("Bad input number");
+		}
+		if (decimal < 1) {
+			return bigValue10;
+		}
+		if (bigValue10.contains(".")) {
+			String[] spl = bigValue10.split("\\.");
+			decimal += spl[1].length();
+			bigValue10 = bigValue10.replaceAll("\\.", "");
+		}
+		while(bigValue10.endsWith("0")) {
+			bigValue10 = bigValue10.substring(0, bigValue10.length() - 1);
+			decimal--;
+		}
+		if (decimal == 0) return bigValue10;
+		while (decimal > bigValue10.length()) {
+			bigValue10 = "0" + bigValue10;
+		}
+		StringBuilder sb = new StringBuilder()//
+				.append(ArrayUtils.add(StringUtils.reverse(bigValue10).toCharArray(), decimal, '.'));
+		String result = StringUtils.reverse(sb.toString());
+		return result.startsWith(".") ? ("0" + result) : result;
 	}
 }

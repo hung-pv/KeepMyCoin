@@ -72,6 +72,31 @@ public class CoreAndUtils {
 	}
 	
 	@Test
+	public void number_fromBigValue() {
+		assertEquals("18",	KMCNumberUtil.fromBigValue("18000000000000000000", 18));
+		assertEquals("1.8",	KMCNumberUtil.fromBigValue( "1800000000000000000", 18));
+		assertEquals("0.8",	KMCNumberUtil.fromBigValue(  "800000000000000000", 18));
+		
+		assertEquals("18",	KMCNumberUtil.fromBigValue("18000000000000000000.0", 18));
+		assertEquals("1.8",	KMCNumberUtil.fromBigValue( "1800000000000000000.0", 18));
+		assertEquals("0.8",	KMCNumberUtil.fromBigValue(  "800000000000000000.0", 18));
+
+		assertEquals("18",	KMCNumberUtil.fromBigValue("18000000000000000000.0000", 18));
+		assertEquals("1.8",	KMCNumberUtil.fromBigValue( "1800000000000000000.0000", 18));
+		assertEquals("0.8",	KMCNumberUtil.fromBigValue(  "800000000000000000.0000", 18));
+		
+		assertEquals("18",	KMCNumberUtil.fromBigValue("180000", 4));
+		assertEquals("1.8",	KMCNumberUtil.fromBigValue( "18000", 4));
+		assertEquals("0.8",	KMCNumberUtil.fromBigValue(  "8000", 4));
+		
+		assertEquals("18.0000505",	KMCNumberUtil.fromBigValue("180000.505", 4));
+		assertEquals("1.8000505",	KMCNumberUtil.fromBigValue( "18000.505", 4));
+		assertEquals("0.8000505",	KMCNumberUtil.fromBigValue(  "8000.505", 4));
+		
+		assertEquals("0.0000005",	KMCNumberUtil.fromBigValue( 	"0.005", 4));
+	}
+	
+	@Test
 	public void number_convertBigIntegerToHex() {
 		single_number_convertBigIntegerToHex("100", "256");
 		single_number_convertBigIntegerToHex("3d", "61");
