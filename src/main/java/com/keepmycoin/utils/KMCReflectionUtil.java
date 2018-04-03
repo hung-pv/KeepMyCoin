@@ -98,13 +98,16 @@ public class KMCReflectionUtil {
 	}
 
 	public static void invokeMethodBypassSecurity(Object instance, Method med, Object...methodArgs) throws Exception {
-		if (med.isAccessible())
-			return;
-		med.setAccessible(true);
+		boolean accessible = med.isAccessible();
+		if (!accessible) {
+			med.setAccessible(true);
+		}
 		while (med.getParameterCount() > methodArgs.length) {
 			methodArgs = ArrayUtils.add(methodArgs, null);
 		}
 		med.invoke(instance, methodArgs);
-		med.setAccessible(false);
+		if (!accessible) {
+			med.setAccessible(false);
+		}
 	}
 }
