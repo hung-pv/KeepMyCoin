@@ -18,7 +18,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Formatter;
 
 import javax.xml.bind.DatatypeConverter;
 
@@ -45,17 +44,6 @@ public class KMCStringUtil {
 			key = barr;
 		}
 		return key;
-	}
-
-	public static void printArray(byte[] barr) {
-		try (Formatter formatter = new Formatter()) {
-			for (byte b : barr) {
-				formatter.format("%02x", b);
-			}
-			System.out.println(formatter.toString());
-		} catch (Exception e) {
-			System.out.println("ERR");
-		}
 	}
 
 	public static String beautiNumber(String number) {

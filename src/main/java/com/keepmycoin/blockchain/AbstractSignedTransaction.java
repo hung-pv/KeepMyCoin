@@ -51,8 +51,8 @@ public abstract class AbstractSignedTransaction implements ISignedTransaction {
 		return transferAmt;
 	}
 
-	public String getTransferAmt(int noOfDownDigits) {
-		return KMCNumberUtil.fromBigValue(this.transferAmt, noOfDownDigits);
+	public String getTransferAmt(int shiftTheDots) {
+		return KMCNumberUtil.shiftTheDot(this.transferAmt.toString(10), shiftTheDots);
 	}
 
 	public void setTransferAmt(BigInteger transferAmt) {

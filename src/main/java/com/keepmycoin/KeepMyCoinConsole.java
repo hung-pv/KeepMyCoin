@@ -39,6 +39,7 @@ import com.keepmycoin.data.Wallet.WalletType;
 import com.keepmycoin.utils.KMCClipboardUtil;
 import com.keepmycoin.utils.KMCFileUtil;
 import com.keepmycoin.utils.KMCInputUtil;
+import com.keepmycoin.utils.KMCStringUtil;
 import com.keepmycoin.validator.IValidator;
 import com.keepmycoin.validator.ValidateMnemonic;
 import com.keepmycoin.validator.ValidateMustBeDouble;
@@ -605,9 +606,9 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		ISignedTransaction stx = bc.signSimpleTransaction(input, unlock);
 		if (stx instanceof EthereumSignedTransaction) {
 			EthereumSignedTransaction estx = (EthereumSignedTransaction) stx;
-			showMsg("Transfer %s ETH", estx.getTransferAmt(18));
+			showMsg("Transfer %s ETH", KMCStringUtil.beautiNumber(estx.getTransferAmt(-18)));
 			showMsg("From %s to %s", estx.getFrom(), estx.getTo());
-			showMsg("Gas price %d gwei, limit %d", estx.getGwei(), estx.getGasLimit());
+			showMsg("Gas price %d gwei, limit %d", KMCStringUtil.beautiNumber(String.valueOf(estx.getGwei())), KMCStringUtil.beautiNumber(String.valueOf(estx.getGasLimit())));
 			showMsg("Signed Tx: %s", estx.getSignedTx());
 			KMCClipboardUtil.setText(estx.getSignedTx(), "SignedTX");
 		}

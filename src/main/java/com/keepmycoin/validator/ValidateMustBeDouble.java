@@ -21,7 +21,7 @@ public class ValidateMustBeDouble extends ValidateRegex {
 
 	@Override
 	public String getPattern() {
-		return "(\\-)?\\d+(\\.\\d+)?";
+		return "(\\-)?\\d+(\\.\\d*)?";
 	}
 
 }

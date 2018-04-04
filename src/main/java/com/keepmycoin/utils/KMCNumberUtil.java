@@ -13,49 +13,11 @@
 package com.keepmycoin.utils;
 
 import java.math.BigInteger;
-import java.util.regex.Pattern;
-
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import com.keepmycoin.validator.ValidateMustBeDouble;
 
 public class KMCNumberUtil {
 
-	private static final Pattern P_VALID_EXPANDED_DOUBLE = Pattern.compile("^\\d+(\\.\\d+)?$");
-	private static final Pattern P_VALID_EXPANDED_INT = Pattern.compile("^\\d+$");
-	
-	public static boolean isValidExpandedDouble(String number) {
-		if (number == null) return false;
-		return P_VALID_EXPANDED_DOUBLE.matcher(number).matches();
-	}
-	
-	public static boolean isValidExpandedInt(String number) {
-		if (number == null) return false;
-		return P_VALID_EXPANDED_INT.matcher(number).matches();
-	}
-	
-	public static String toBigValue(String number, int decimal) {
-		if (!number.contains(".")) {
-			number = number + ".0";
-		}
-		if (number.endsWith(".")) {
-			number = number + "0";
-		}
-		String[] spl = number.split("\\.");
-		// 0: left - natural
-		// 1: right - decimal
-		String decimalPart = spl[1];
-		while (decimalPart.length() < decimal) {
-			decimalPart += "0";
-		}
-		String result = spl[0] + decimalPart;
-		while (result.startsWith("0")) {
-			result = result.substring(1);
-		}
-		return result;
-	}
-	
 	public static String convertBigIntegerToHex(BigInteger bi) {
 		String result = bi.toString(16);
 		if (result.length() % 2 == 1) {
@@ -63,47 +25,68 @@ public class KMCNumberUtil {
 		}
 		return result;
 	}
-	
+
 	public static BigInteger fromHexToBigInteger(String hex) {
-		if (hex == null) return null;
-		if (hex.toLowerCase().startsWith("0x")) hex = hex.substring(2);
-		if (hex.toLowerCase().startsWith("x")) hex = hex.substring(1);
+		if (hex == null)
+			return null;
+		if (hex.toLowerCase().startsWith("0x"))
+			hex = hex.substring(2);
+		if (hex.toLowerCase().startsWith("x"))
+			hex = hex.substring(1);
 		return new BigInteger(hex, 16);
 	}
-	
-	public static String fromBigValue(BigInteger bigInt, int decimal) {
-		return fromBigValue(bigInt.toString(10), decimal);
+
+	public static String shiftTheDot(String bigValue, int shiftSteps) {
+		return shiftTheDot(bigValue, shiftSteps, false);
 	}
-	
-	public static String fromBigValue(String bigValue10, int decimal) {
-		if (bigValue10.startsWith(".")) {
-			bigValue10 = "0" + bigValue10;
+
+	public static String shiftTheDot(String bigValue, int shiftSteps, boolean beauty) {
+		if (bigValue != null && bigValue.contains(",")) {
+			bigValue = bigValue.replaceAll("\\,", "");
 		}
-		if (bigValue10.endsWith(".")) {
-			bigValue10 = bigValue10 + "0";
+		if (!new ValidateMustBeDouble().isValid(bigValue)) {
+			throw new NumberFormatException("Must be a raw text double");
 		}
-		if (!new ValidateMustBeDouble().isValid(bigValue10)) {
-			throw new IllegalArgumentException("Bad input number");
+		if (shiftSteps == 0)
+			return bigValue;
+		if (!bigValue.contains(".")) {
+			bigValue += ".0";
 		}
-		if (decimal < 1) {
-			return bigValue10;
+		String[] spl = bigValue.split("\\.", 2);
+		StringBuilder sb = new StringBuilder(bigValue);
+		String targetPart = shiftSteps > 0 ? spl[1] : spl[0];
+		int noOfCharsToAdd = Math.abs(shiftSteps) - targetPart.length();
+		while (noOfCharsToAdd > 0) {
+			if (shiftSteps > 0) {
+				sb.append('0');
+			} else {
+				sb.insert(0, '0');
+			}
+			noOfCharsToAdd--;
 		}
-		if (bigValue10.contains(".")) {
-			String[] spl = bigValue10.split("\\.");
-			decimal += spl[1].length();
-			bigValue10 = bigValue10.replaceAll("\\.", "");
+
+		int dotIndex = sb.indexOf(".");
+		sb.deleteCharAt(dotIndex);
+
+		int insertIndex = dotIndex + shiftSteps;
+		sb.insert(insertIndex, '.');
+
+		int indexLastChar = sb.length() - 1;
+
+		if (sb.charAt(0) == '.') {
+			sb.insert(0, '0');
+		} else if (sb.charAt(indexLastChar) == '.') {
+			sb.deleteCharAt(indexLastChar);
 		}
-		while(bigValue10.endsWith("0")) {
-			bigValue10 = bigValue10.substring(0, bigValue10.length() - 1);
-			decimal--;
+		while (sb.charAt(0) == '0' && sb.charAt(1) != '.') {
+			sb.deleteCharAt(0);
 		}
-		if (decimal == 0) return bigValue10;
-		while (decimal > bigValue10.length()) {
-			bigValue10 = "0" + bigValue10;
+		while (sb.charAt(sb.length() - 1) == '0' && sb.indexOf(".") >= 0) {
+			sb.deleteCharAt(sb.length() - 1);
 		}
-		StringBuilder sb = new StringBuilder()//
-				.append(ArrayUtils.add(StringUtils.reverse(bigValue10).toCharArray(), decimal, '.'));
-		String result = StringUtils.reverse(sb.toString());
-		return result.startsWith(".") ? ("0" + result) : result;
+		if (sb.charAt(sb.length() - 1) == '.') {
+			sb.deleteCharAt(sb.length() - 1);
+		}
+		return beauty ? KMCStringUtil.beautiNumber(sb.toString()) : sb.toString();
 	}
 }

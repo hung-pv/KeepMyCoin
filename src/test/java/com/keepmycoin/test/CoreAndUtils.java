@@ -62,38 +62,44 @@ public class CoreAndUtils {
 	}
 	
 	@Test
-	public void number_toBigValue() {
-		assertEquals("18000000000000000000", KMCNumberUtil.toBigValue("18.0", 18));
-		assertEquals("18000000000000000000", KMCNumberUtil.toBigValue("18.", 18));
-		assertEquals("18000000000000000000", KMCNumberUtil.toBigValue("18", 18));
-		assertEquals("1800000000000000000", KMCNumberUtil.toBigValue("1.8", 18));
-		assertEquals("800000000000000000", KMCNumberUtil.toBigValue("0.8", 18));
-		assertEquals("800000000000000000", KMCNumberUtil.toBigValue(".8", 18));
-	}
-	
-	@Test
-	public void number_fromBigValue() {
-		assertEquals("18",	KMCNumberUtil.fromBigValue("18000000000000000000", 18));
-		assertEquals("1.8",	KMCNumberUtil.fromBigValue( "1800000000000000000", 18));
-		assertEquals("0.8",	KMCNumberUtil.fromBigValue(  "800000000000000000", 18));
+	public void number_shiftTheDot() {
+		assertEquals("18000000000000000000", KMCNumberUtil.shiftTheDot("18.0", 18));
+		assertEquals("18,000,000,000,000,000,000", KMCNumberUtil.shiftTheDot("18.0", 18, true));
+		assertEquals("18000000000000000000", KMCNumberUtil.shiftTheDot("18.", 18));
+		assertEquals("18000000000000000000", KMCNumberUtil.shiftTheDot("18", 18));
+		assertEquals("1800000000000000000", KMCNumberUtil.shiftTheDot("1.8", 18));
+		assertEquals("800000000000000000", KMCNumberUtil.shiftTheDot("0.8", 18));
+		boolean err = false;
+		try {
+			KMCNumberUtil.shiftTheDot(".8", 18);
+		} catch (Exception e) {
+			err = true;
+		}
+		assertTrue(err);
 		
-		assertEquals("18",	KMCNumberUtil.fromBigValue("18000000000000000000.0", 18));
-		assertEquals("1.8",	KMCNumberUtil.fromBigValue( "1800000000000000000.0", 18));
-		assertEquals("0.8",	KMCNumberUtil.fromBigValue(  "800000000000000000.0", 18));
+		assertEquals("18",	KMCNumberUtil.shiftTheDot("18000000000000000000", -18));
+		assertEquals("1.8",	KMCNumberUtil.shiftTheDot( "1800000000000000000", -18));
+		assertEquals("0.8",	KMCNumberUtil.shiftTheDot(  "800000000000000000", -18));
+		
+		assertEquals("18",	KMCNumberUtil.shiftTheDot("18000000000000000000.0", -18));
+		assertEquals("1.8",	KMCNumberUtil.shiftTheDot( "1800000000000000000.0", -18));
+		assertEquals("0.8",	KMCNumberUtil.shiftTheDot(  "800000000000000000.0", -18));
 
-		assertEquals("18",	KMCNumberUtil.fromBigValue("18000000000000000000.0000", 18));
-		assertEquals("1.8",	KMCNumberUtil.fromBigValue( "1800000000000000000.0000", 18));
-		assertEquals("0.8",	KMCNumberUtil.fromBigValue(  "800000000000000000.0000", 18));
+		assertEquals("18",	KMCNumberUtil.shiftTheDot("18000000000000000000.0000", -18));
+		assertEquals("1.8",	KMCNumberUtil.shiftTheDot( "1800000000000000000.0000", -18));
+		assertEquals("0.8",	KMCNumberUtil.shiftTheDot(  "800000000000000000.0000", -18));
 		
-		assertEquals("18",	KMCNumberUtil.fromBigValue("180000", 4));
-		assertEquals("1.8",	KMCNumberUtil.fromBigValue( "18000", 4));
-		assertEquals("0.8",	KMCNumberUtil.fromBigValue(  "8000", 4));
-		
-		assertEquals("18.0000505",	KMCNumberUtil.fromBigValue("180000.505", 4));
-		assertEquals("1.8000505",	KMCNumberUtil.fromBigValue( "18000.505", 4));
-		assertEquals("0.8000505",	KMCNumberUtil.fromBigValue(  "8000.505", 4));
-		
-		assertEquals("0.0000005",	KMCNumberUtil.fromBigValue( 	"0.005", 4));
+		assertEquals("18",	KMCNumberUtil.shiftTheDot("180000", -4));
+		assertEquals("1.8",	KMCNumberUtil.shiftTheDot( "18000", -4));
+		assertEquals("0.8",	KMCNumberUtil.shiftTheDot(  "8000", -4));
+
+		assertEquals("18.0000505",	KMCNumberUtil.shiftTheDot("180000.505", -4));
+		assertEquals("1,800.0000505",	KMCNumberUtil.shiftTheDot("18000000.505", -4, true));
+		assertEquals("18.0000505",	KMCNumberUtil.shiftTheDot("180,000.505", -4));
+		assertEquals("1.8000505",	KMCNumberUtil.shiftTheDot("18000.505", -4));
+		assertEquals("0.8000505",	KMCNumberUtil.shiftTheDot("8000.505", -4));
+		assertEquals("0.8000505",	KMCNumberUtil.shiftTheDot("8,000.505", -4));
+		assertEquals("0.0000005",	KMCNumberUtil.shiftTheDot("0.005", -4));
 	}
 	
 	@Test
@@ -101,7 +107,7 @@ public class CoreAndUtils {
 		single_number_convertBigIntegerToHex("100", "256");
 		single_number_convertBigIntegerToHex("3d", "61");
 		single_number_convertBigIntegerToHex("5208", "21000");
-		single_number_convertBigIntegerToHex("12d5084f70348000", KMCNumberUtil.toBigValue("1.357", 18));
+		single_number_convertBigIntegerToHex("12d5084f70348000", KMCNumberUtil.shiftTheDot("1.357", 18));
 	}
 	
 	private void single_number_convertBigIntegerToHex(String expected, String num) {
