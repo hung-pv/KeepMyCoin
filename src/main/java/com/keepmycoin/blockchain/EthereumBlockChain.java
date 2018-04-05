@@ -40,8 +40,8 @@ public class EthereumBlockChain implements IBlockChain {
 		String jsonObj = KMCJsonUtil.toJSon(txi);
 		String jsonObjVar = String.format("jsonObjVar%s", txi.getGuid());
 		JSObject jsObj = JavaScript.ENGINE_MEW.putVariableAndGetJsObj(jsonObjVar, jsonObj);
-		JavaScript.ENGINE_MEW.invokeFunction("mew_signEtherTx", jsObj);
 		JavaScript.ENGINE_MEW.freeVariable(jsonObjVar);
+		JavaScript.ENGINE_MEW.invokeFunction("mew_signEtherTx", jsObj);
 		
 		Calendar cal = Calendar.getInstance();
 		cal.add(Calendar.SECOND, 30);
@@ -61,7 +61,7 @@ public class EthereumBlockChain implements IBlockChain {
 
 		String tx = String.valueOf(JavaScript.ENGINE_MEW.invokeFunction("mew_resultStorageGet", txi.getGuid()));
 		try {
-			JavaScript.ENGINE_MEW.invokeFunction("mew_removeResult", txi.getGuid());
+			JavaScript.ENGINE_MEW.invokeFunction("mew_removeResult", txi.getGuid());// free the memory
 		} catch (Exception e) {
 		}
 		log.debug(tx);
