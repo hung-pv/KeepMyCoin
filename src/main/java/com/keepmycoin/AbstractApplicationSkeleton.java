@@ -426,4 +426,8 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 	protected void askContinueOrExit(String question) throws Exception {
 		log.trace("askContinueOrExit");
 	}
+	
+	protected void exit() throws Exception {
+		System.exit(0);
+	}
 }

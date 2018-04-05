@@ -151,7 +151,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 	protected void launchMenu() throws Exception {
 		log.trace("launchMenu");
 		TimeoutManager.renew();
-		MenuManager mm = new MenuManager();
+		MenuManager mm = new MenuManager(this);
 
 		if (!isKeystoreExists()) {
 			mm.add("Generate keystore", "generateNewKeystore");
@@ -163,9 +163,10 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 			mm.add("Save an account", "saveAnAccount");
 			mm.add("Read an account", "readAnAccount");
 		}
+		mm.add("Exit", "exit");
 
 		int selection = getMenuSelection(mm, "\n==========\n\nHello! Today is a beautiful day, what do want to do?");
-		mm.getOptionBySelection(selection).processMethod(this);
+		mm.processSelectedOption(selection);
 	}
 
 	@Override
@@ -238,7 +239,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 	@Override
 	public void saveAWallet() throws Exception {
 		log.trace("saveAWallet");
-		MenuManager mm = new MenuManager();
+		MenuManager mm = new MenuManager(this);
 		for (WalletType wt : WalletType.values()) {
 			mm.add(wt.getDisplayText(), null);
 		}
@@ -271,18 +272,18 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 
 		String address;
 		showMsg("Address (required, will not be encrypted):");
+		
 
-		if (wt == WalletType.ERC20) {
-			address = KMCInputUtil.getInput("Address", false, null, new ValidateEthAddress());
-			KMCInputUtil.requireConfirmation(address);
-		} else {
-			while (true) {
+		while (true) {
+			if (wt == WalletType.ERC20) {
+				address = KMCInputUtil.getInput("Address", false, null, new ValidateEthAddress());
+			} else {
 				address = KMCInputUtil.getInput(null, 68);
-				if (KMCInputUtil.confirm("You sure? Please confirm this address again!")) {
-					break;
-				}
-				showMsg("Address:");
 			}
+			if (KMCInputUtil.confirm("Please carefully confirm this address again!")) {
+				break;
+			}
+			showMsg("Address:");
 		}
 
 		showMsg("PRIVATE note - this content can NOT be changed later (optional, will be encrypted):");
@@ -299,12 +300,12 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 	@Override
 	protected void readAWallet_choose(List<Wallet> wallets) throws Exception {
 		log.trace("readAWallet_choose");
-		MenuManager mm = new MenuManager();
+		MenuManager mm = new MenuManager(this);
 		for (Wallet w : wallets) {
 			mm.add(String.format(" %s (%s)", w.getAddress(), w.getWalletType()), "readAWallet_read", w);
 		}
 		int selection = getMenuSelection(mm, "Select a wallet");
-		mm.getOptionBySelection(selection).processMethod(this);
+		mm.processSelectedOption(selection);
 	}
 
 	@Override
@@ -317,7 +318,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 			showMsg("* Note:\n%s", wallet.getPublicNote());
 		}
 		pressEnterToContinue();
-		MenuManager mm = new MenuManager();
+		MenuManager mm = new MenuManager(this);
 		mm.add("Go back to main menu", null);
 		if (wallet.is(WalletType.ERC20)) {
 			mm.add("Sign a simple transaction", "signSimpleEthereumTransactionForWallet", wallet);
@@ -330,7 +331,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		mm.add("Show ALL private key, mnemonic and also private note", "readAWallet_action", wallet, "show", "all");
 
 		int selection = getMenuSelection(mm, "* What do want to do?");
-		mm.getOptionBySelection(selection).processMethod(this);
+		mm.processSelectedOption(selection);
 	}
 
 	@SuppressWarnings("unused")
@@ -416,7 +417,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 	@Override
 	protected void readAnAccount_choose(List<Account> accounts) throws Exception {
 		log.trace("readAnAccount_choose");
-		MenuManager mm = new MenuManager();
+		MenuManager mm = new MenuManager(this);
 		for (Account a : accounts) {
 			StringBuilder option = new StringBuilder();
 			option.append(a.getName());
@@ -432,7 +433,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 			mm.add(option.toString(), "readAnAccount_read", a);
 		}
 		int selection = getMenuSelection(mm, "Select an account");
-		mm.getOptionBySelection(selection).processMethod(this);
+		mm.processSelectedOption(selection);
 	}
 
 	@Override
@@ -448,7 +449,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 			showMsg("* Note:\n%s", account.getPublicNote());
 		}
 		pressEnterToContinue();
-		MenuManager mm = new MenuManager();
+		MenuManager mm = new MenuManager(this);
 		mm.add("Go back to main menu", null);
 		mm.add("Copy password to clipboard", "readAnAccount_action", account, "copy", "password");
 		mm.add("Copy 2fa to clipboard", "readAnAccount_action", account, "copy", "2fa");
@@ -458,7 +459,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		mm.add("Show ALL password, 2fa and also private note", "readAnAccount_action", account, "show", "all");
 
 		int selection = getMenuSelection(mm, "* What do want to do?");
-		mm.getOptionBySelection(selection).processMethod(this);
+		mm.processSelectedOption(selection);
 	}
 
 	@SuppressWarnings("unused")
@@ -506,24 +507,25 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 	@Override
 	public void signTransaction() throws Exception {
 		log.trace("signTransaction");
-		MenuManager mm = new MenuManager();
+		MenuManager mm = new MenuManager(this);
+		mm.add("Return to main menu", null);
 		mm.add("Sign an Ethereum tx", "signSimpleEthereumTransaction");
 		mm.add("Sign an Contract ETH tx (on developing)", null);
 		int selection = getMenuSelection(mm, "Choose a type of transaction");
-		mm.getOptionBySelection(selection).processMethod(this);
+		mm.processSelectedOption(selection);
 	}
 
 	@SuppressWarnings("unused")
 	private void signSimpleEthereumTransaction() throws Exception {
 		log.trace("signSimpleEthereumTransaction");
-		MenuManager mm = new MenuManager();
+		MenuManager mm = new MenuManager(this);
 		mm.add("Manually input", "signSimpleEthereumTransactionForWallet");
 		AbstractKMCData.filter(this.dvc.getAllKMCFiles(), Wallet.class).stream()//
 				.filter(w -> w.is(WalletType.ERC20)).forEach(w -> {
 					mm.add(w.getAddress(), "signSimpleEthereumTransactionForWallet", w);
 				});
-
-		mm.getOptionBySelection(getMenuSelection(mm, "Select a wallet:")).processMethod(this);
+		int selection = getMenuSelection(mm, "Select a wallet:");
+		mm.processSelectedOption(selection);
 	}
 
 	@SuppressWarnings("unused")
@@ -544,7 +546,6 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		if (from == null) {
 			showMsg("From address:");
 			from = KMCInputUtil.getInput("From address", false, null, validatorEthAddress);
-			KMCInputUtil.requireConfirmation(from);
 		}
 		if (privKey == null) {
 			showMsg("Private key:");
@@ -593,11 +594,12 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		ITransactionInput input = new SimpleEthereumTransactionInput(from, to, amtEthTransfer, nonce, gwei, gasLimit);
 		IUnlockMethod unlock = new UnlockByPrivateKey(privKey);
 
-		MenuManager mm = new MenuManager();
+		MenuManager mm = new MenuManager(this);
 		mm.add("Sign this transaction", "showSignedTransaction", bc, input, unlock);
 		mm.add("Re-make", "signSimpleEthereumTransactionForWallet", wallet);
 		mm.add("Cancel", null);
-		mm.getOptionBySelection(getMenuSelection(mm, "Sign it?")).processMethod(this);
+		int selection = getMenuSelection(mm, "Sign it?");
+		mm.processSelectedOption(selection);
 	}
 
 	@SuppressWarnings("unused")
@@ -608,7 +610,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 			EthereumSignedTransaction estx = (EthereumSignedTransaction) stx;
 			showMsg("Transfer %s ETH", KMCStringUtil.beautiNumber(estx.getTransferAmt(-18)));
 			showMsg("From %s to %s", estx.getFrom(), estx.getTo());
-			showMsg("Gas price %d gwei, limit %d", KMCStringUtil.beautiNumber(String.valueOf(estx.getGwei())), KMCStringUtil.beautiNumber(String.valueOf(estx.getGasLimit())));
+			showMsg("Gas price %s gwei, limit %s", KMCStringUtil.beautiNumber(String.valueOf(estx.getGwei())), KMCStringUtil.beautiNumber(String.valueOf(estx.getGasLimit())));
 			showMsg("Signed Tx: %s", estx.getSignedTx());
 			KMCClipboardUtil.setText(estx.getSignedTx(), "SignedTX");
 		}
@@ -628,7 +630,8 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		}
 	}
 
-	private void exit() throws Exception {
+	@Override
+	protected void exit() throws Exception {
 		try {
 			if (SystemUtils.IS_OS_WINDOWS) {
 				String[] cls = new String[] { "cmd.exe", "/c", "cls" };

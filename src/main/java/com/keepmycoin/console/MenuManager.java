@@ -12,12 +12,27 @@
  *******************************************************************************/
 package com.keepmycoin.console;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.keepmycoin.IKeepMyCoin;
+import com.keepmycoin.KeepMyCoinConsole;
+import com.keepmycoin.annotation.Continue;
+import com.keepmycoin.annotation.RequiredKeystore;
+import com.keepmycoin.utils.KMCReflectionUtil;
+
 public class MenuManager {
+	
+	private static final org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger(MenuManager.class);
 
 	private List<Option> options = new ArrayList<>();
+	private KeepMyCoinConsole consoleInstance;
+
+	public MenuManager(KeepMyCoinConsole consoleInstance) {
+		this.consoleInstance = consoleInstance;
+	}
 
 	public void add(Option option) {
 		this.options.add(option);
@@ -42,5 +57,43 @@ public class MenuManager {
 
 	public int countMenus() {
 		return this.options.size();
+	}
+
+	public <T extends IKeepMyCoin> void processSelectedOption(int selected) throws Exception {
+		this.processSelectedOption(this.getOptionBySelection(selected));
+	}
+
+	public <T extends IKeepMyCoin> void processSelectedOption(Option option) throws Exception {
+		if (option == null || option.getProcessMethod() == null || this.consoleInstance == null) return;
+		try {
+			Method med = KMCReflectionUtil.getDeclaredMethod(this.consoleInstance.getClass(), option.getProcessMethod(), option.getMethodParameterTypes());
+
+			if (KMCReflectionUtil.isMethodHasAnnotation(med, RequiredKeystore.class, this.consoleInstance.getClass())) {
+				Method medLoadKeystore = KMCReflectionUtil.getDeclaredMethod(this.consoleInstance.getClass(), "loadKeystore");
+				KMCReflectionUtil.invokeMethodBypassSecurity(this.consoleInstance, medLoadKeystore);
+			}
+
+			KMCReflectionUtil.invokeMethodBypassSecurity(this.consoleInstance, med, option.getMethodArgs());
+
+			if (this.consoleInstance instanceof KeepMyCoinConsole) {
+				if (KMCReflectionUtil.isMethodHasAnnotation(med, Continue.class, this.consoleInstance.getClass())) {
+					Method medLaunchMenu = KMCReflectionUtil.getDeclaredMethod(this.consoleInstance.getClass(), "launchMenu");
+					KMCReflectionUtil.invokeMethodBypassSecurity(this.consoleInstance, medLaunchMenu);
+				}
+			}
+		} catch (Exception e) {
+			if (e instanceof NoSuchMethodException) {
+				log.fatal("NoSuchMethodException", e);
+				System.err.println("Under construction !!!");
+			} else {
+				Throwable caused = e.getCause();
+				if (caused instanceof InvocationTargetException) {
+					log.fatal("Unhandled exception", caused.getCause());
+				} else {
+					log.fatal("Unhandled exception", e);
+				}
+				System.exit(1);
+			}
+		}
 	}
 }
