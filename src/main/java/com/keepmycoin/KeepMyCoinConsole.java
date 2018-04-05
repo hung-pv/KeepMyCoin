@@ -563,18 +563,18 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		}
 
 		showMsg("Nonce:");
-		int nonce = KMCInputUtil.getInput("Nonce", false, input -> new Integer(Integer.parseInt(input)), //
+		int nonce = KMCInputUtil.getInput("Nonce", false, input -> Integer.valueOf(input), //
 				new ValidateMustBeInteger(), new ValidateNumberNotNegative<Integer>()).intValue();
 
 		showMsg("Amount of ETH to transfer:");
 		double amtEthTransfer = KMCInputUtil.getInput("ETH amount", false,
-				input -> new Double(Double.valueOf(input).doubleValue()), //
+				input -> Double.valueOf(input), //
 				new ValidateMustBeDouble(), new ValidateNumberNotNegative<Double>());
 
 		int gasLimit = 21000;
 		showMsg("Gas limit:");
 		showMsg("(default %s, press Enter to skip)", gasLimit);
-		Integer tmp = KMCInputUtil.getInput("Gas limit", true, input -> new Integer(Integer.parseInt(input)), //
+		Integer tmp = KMCInputUtil.getInput("Gas limit", true, input -> Integer.valueOf(input), //
 				new ValidateMustBeInteger(), new ValidateNumberNotNegative<Integer>());
 		if (tmp != null) {
 			gasLimit = tmp.intValue();
@@ -583,7 +583,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		int gwei = 41;
 		showMsg("Gas price in Gwei:");
 		showMsg("(default %s Gwei, press Enter to skip)", gwei);
-		tmp = KMCInputUtil.getInput("Gas price", true, input -> new Integer(Integer.parseInt(input)), //
+		tmp = KMCInputUtil.getInput("Gas price", true, input -> Integer.valueOf(input), //
 				new ValidateMustBeInteger(), new ValidateNumberNotNegative<Integer>());
 		if (tmp != null) {
 			gwei = tmp.intValue();

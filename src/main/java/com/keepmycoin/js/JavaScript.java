@@ -81,20 +81,31 @@ public class JavaScript {
 		}
 	}
 	
-	public void execute(CharSequence script) throws ScriptException {
-		this.engine.eval(script.toString());
+	public void execute(CharSequence script, Object...scriptArgs) throws ScriptException {
+		log.trace("execute");
+		if (scriptArgs.length == 0) {
+			this.engine.eval(script.toString());
+		} else {
+			String s = String.format(script.toString(), scriptArgs);
+			log.debug("Script: " + s);
+			this.engine.eval(s);
+		}
+		log.trace("after execute");
 	}
 	
 	public String getVariableValue(String varName) {
+		log.trace("getVariableValue");
 		return String.valueOf(this.engine.get(varName));
 	}
 	
-	public String executeAndGetValue(CharSequence script, String outputVarName) throws ScriptException {
-		this.execute(script);
+	public String executeAndGetValue(CharSequence script, String outputVarName, Object...scriptArgs) throws ScriptException {
+		log.trace("executeAndGetValue");
+		this.execute(script, scriptArgs);
 		return this.getVariableValue(outputVarName);
 	}
 	
 	public String[] executeAndGetValues(CharSequence script, String...outputVarNames) throws ScriptException {
+		log.trace("executeAndGetValues");
 		this.execute(script);
 		return (String[])Arrays.asList(outputVarNames).stream().map(v -> this.getVariableValue(v)).toArray();
 	}

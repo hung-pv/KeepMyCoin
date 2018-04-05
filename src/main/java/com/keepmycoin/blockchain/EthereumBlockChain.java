@@ -24,21 +24,24 @@ public class EthereumBlockChain implements IBlockChain {
 
 	@Override
 	public ISignedTransaction signSimpleTransaction(ITransactionInput input, IUnlockMethod unlockMethod) throws Exception {
+		log.trace("signSimpleTransaction");
 		if (!(input instanceof SimpleEthereumTransactionInput)) return null;
 		if (!(unlockMethod instanceof UnlockByPrivateKey)) throw new UnlockMethodNotSupportedException(unlockMethod);
 		SimpleEthereumTransactionInput txInput = (SimpleEthereumTransactionInput)input;
 		UnlockByPrivateKey privKeyUnlockMethod = (UnlockByPrivateKey)unlockMethod;
 		
 		EtherTxInfo txi = new EtherTxInfo(txInput.getFrom(), txInput.getTo(), txInput.getAmtTransfer(), txInput.getNonce(), txInput.getGWei(), txInput.getGasLimit(), privKeyUnlockMethod.getPrivateKey());
-		JavaScript.ENGINE_MEW.execute("mew.signEtherTx('" + KMCJsonUtil.toJSon(txi) + "');");
 
+		String jsonObj = KMCJsonUtil.toJSon(txi);
+		JavaScript.ENGINE_MEW.execute("mew.signEtherTx('%s');", jsonObj);
 		String tmp = "has" + txi.getGuid();
 		do {
 			Thread.sleep(50);
-		} while(!Boolean.valueOf(JavaScript.ENGINE_MEW.executeAndGetValue("var " + tmp + " = resultStorage.has('" + txi.getGuid() + "');", tmp)));
+			log.debug("Waiting...");
+		} while(!Boolean.valueOf(JavaScript.ENGINE_MEW.executeAndGetValue("var %s = resultStorage.has('%s');", tmp, tmp, txi.getGuid())));
 
 		String json = "json" + txi.getGuid();
-		String tx = JavaScript.ENGINE_MEW.executeAndGetValue("var " + json + " = resultStorage['" + txi.getGuid() + "'];", json);
+		String tx = JavaScript.ENGINE_MEW.executeAndGetValue("var %s = resultStorage['%s'];", json, tmp, txi.getGuid());
 		log.debug(tx);
 		EtherSignedTx est = KMCJsonUtil.parse(tx, EtherSignedTx.class);
 		return est == null || est.isIsError() ? null : new EthereumSignedTransaction(txInput.getFrom(), est.getTo(), est.getValue(), est.getRawTx(), est.getSignedTx(), est.getNonce(), est.getGasPrice(), est.getGasLimit(), est.getData());

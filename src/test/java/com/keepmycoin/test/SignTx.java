@@ -29,6 +29,9 @@ import com.keepmycoin.js.data.EtherTxInfo;
 import com.keepmycoin.utils.KMCJsonUtil;
 
 public class SignTx {
+	
+	private static final org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger(SignTx.class);
+	
 	private static final String ADDR_FROM = "0xd8C61D0719f54fDf2BF794135b6b0384AC89deFE";
 	public static final String PRVK_FROM = "8612b0addc93c2fb31f6bcc79e493d846c051abc6e803cfab0c2d9f4187b26c7";
 	private static final String ADDR_TO = "0xF5f3300d2021A81DB40330d7761281B736abd56d";
@@ -71,14 +74,16 @@ public class SignTx {
 	
 	private EtherSignedTx signSimpleEthTxManually() throws Exception {
 		EtherTxInfo txi = new EtherTxInfo(ADDR_FROM, ADDR_TO, ETH_VALUE, NONCE, GWEI, GAS_LIMIT, PRVK_FROM);
-		JavaScript.ENGINE_MEW.execute("mew.signEtherTx('" + KMCJsonUtil.toJSon(txi) + "');");
+		String jsonObj = KMCJsonUtil.toJSon(txi);
+		JavaScript.ENGINE_MEW.execute("mew.signEtherTx('%s');", jsonObj);
 		String tmp = "has" + txi.getGuid();
 		do {
 			Thread.sleep(50);
-		} while(!Boolean.valueOf(JavaScript.ENGINE_MEW.executeAndGetValue("var " + tmp + " = resultStorage.has('" + txi.getGuid() + "');", tmp)));
+			log.info("Waiting...");
+		} while(!Boolean.valueOf(JavaScript.ENGINE_MEW.executeAndGetValue("var %s = resultStorage.has('%s');", tmp, tmp, txi.getGuid())));
 
 		String json = "json" + txi.getGuid();
-		String tx = JavaScript.ENGINE_MEW.executeAndGetValue("var " + json + " = resultStorage['" + txi.getGuid() + "'];", json);
+		String tx = JavaScript.ENGINE_MEW.executeAndGetValue("var %s = resultStorage['%s'];", json, tmp, txi.getGuid());
 		EtherSignedTx est = KMCJsonUtil.parse(tx, EtherSignedTx.class);
 		return est;
 	}
