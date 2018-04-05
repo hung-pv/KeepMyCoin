@@ -39,7 +39,7 @@ public class AES {
 		
 		script.append("var encrypted = encryptAES(aesKey, buffer);");
 		
-		String result = JavaScript.ENGINE_AES.executeAndGetValue(script, "encrypted");
+		String result = String.valueOf(JavaScript.ENGINE_AES.executeAndGetValue(script, "encrypted"));
 		byte[] buffer = KMCStringUtil.parseHexBinary(result);
 		return buffer;
 	}
@@ -60,7 +60,7 @@ public class AES {
 		
 		script.append("var decrypted = decryptAES(aesKey, buffer);");
 
-		String decrypted = JavaScript.ENGINE_AES.executeAndGetValue(script, "decrypted");
+		String decrypted = String.valueOf(JavaScript.ENGINE_AES.executeAndGetValue(script, "decrypted"));
 		String[] spl = decrypted.split("\\s*\\,\\s*");
 		byte[] result = new byte[spl.length];
 		for(int i = 0; i < spl.length; i++) {

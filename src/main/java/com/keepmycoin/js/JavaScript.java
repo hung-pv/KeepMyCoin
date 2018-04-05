@@ -43,7 +43,7 @@ public class JavaScript {
 		JavaScript engine = null;
 		log.debug("Loading AES");
 		try {
-			engine = new JavaScript("aes256-engine", "aes256-ext");
+			engine = new JavaScript("aes256-engine");
 		} catch (Exception e) {
 			log.fatal("Unable to load JS engine of AES", e);
 			System.exit(1);
@@ -52,7 +52,7 @@ public class JavaScript {
 		engine = null;
 		log.debug("Loading MEW");
 		try {
-			engine = new JavaScript("etherwallet-master", "mew-ext");
+			engine = new JavaScript("etherwallet-master");
 		} catch (Exception e) {
 			log.fatal("Unable to load JS engine of MEW", e);
 			System.exit(1);
@@ -84,15 +84,20 @@ public class JavaScript {
 		}
 	}
 	
-	public void putVariable(String name, Object value) {
+	public void putVariable(String varName, Object value) {
 		log.trace("putVariable");
-		this.engine.put(name, value);
+		this.engine.put(varName, value);
 	}
 	
-	public JSObject putVariableAndGetJsObj(String name, Object value) throws Exception {
-		log.trace("putVariable");
-		this.putVariable(name, value);
-		return (JSObject)this.execute("JSON.parse(%s);", name);
+	public void freeVariable(String varName) throws Exception {
+		log.trace("freeVariable");
+		this.execute("var %s = undefined;", varName);
+	}
+	
+	public JSObject putVariableAndGetJsObj(String varName, Object value) throws Exception {
+		log.trace("putVariableAndGetJsObj");
+		this.putVariable(varName, value);
+		return (JSObject)this.execute("JSON.parse(%s);", varName);
 	}
 	
 	public Object invokeFunction(String funcName, Object...args) throws Exception {
@@ -112,26 +117,21 @@ public class JavaScript {
 		}
 	}
 	
-	public Object getVariable(String varName) {
-		log.trace("getVariable");
+	public Object getVariableValue(String varName) {
+		log.trace("getVariableValue");
 		return this.engine.get(varName);
 	}
 	
-	public String getVariableValue(String varName) {
-		log.trace("getVariableValue");
-		return String.valueOf(this.getVariable(varName));
-	}
-	
-	public String executeAndGetValue(CharSequence script, String outputVarName, Object...scriptArgs) throws ScriptException {
+	public Object executeAndGetValue(CharSequence script, String outputVarName, Object...scriptArgs) throws ScriptException {
 		log.trace("executeAndGetValue");
 		this.execute(script, scriptArgs);
 		return this.getVariableValue(outputVarName);
 	}
 	
-	public String[] executeAndGetValues(CharSequence script, String...outputVarNames) throws ScriptException {
+	public Object[] executeAndGetValues(CharSequence script, String...outputVarNames) throws ScriptException {
 		log.trace("executeAndGetValues");
 		this.execute(script);
-		return (String[])Arrays.asList(outputVarNames).stream().map(v -> this.getVariableValue(v)).toArray();
+		return (Object[])Arrays.asList(outputVarNames).stream().map(v -> this.getVariableValue(v)).toArray();
 	}
 
 	private static String loadFileFromResource(String fileName) throws IOException {

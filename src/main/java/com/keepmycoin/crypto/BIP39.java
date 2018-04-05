@@ -21,11 +21,7 @@ public class BIP39 {
 	}
 	
 	public static String entropyToMnemonic(String entropy) throws Exception {
-		StringBuilder script = new StringBuilder();
-		script.append("var mnemonic = window.hd.bip39.entropyToMnemonic('");
-		script.append(entropy);
-		script.append("');");
-		return JavaScript.ENGINE_MEW.executeAndGetValue(script, "mnemonic");
+		return String.valueOf(JavaScript.ENGINE_MEW.invokeFunction("mew_entropyToMnemonic", entropy));
 	}
 
 	public static byte[] mnemonicToEntropyBuffer(String mnemonic) throws Exception {
@@ -33,10 +29,6 @@ public class BIP39 {
 	}
 
 	public static String mnemonicToEntropy(String mnemonic) throws Exception {
-		StringBuilder script = new StringBuilder();
-		script.append("var entropy = window.hd.bip39.mnemonicToEntropy('");
-		script.append(mnemonic);
-		script.append("');");
-		return JavaScript.ENGINE_MEW.executeAndGetValue(script, "entropy");
+		return String.valueOf(JavaScript.ENGINE_MEW.invokeFunction("mew_mnemonicToEntropy", mnemonic));
 	}
 }

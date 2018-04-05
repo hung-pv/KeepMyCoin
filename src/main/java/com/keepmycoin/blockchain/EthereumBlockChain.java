@@ -40,13 +40,14 @@ public class EthereumBlockChain implements IBlockChain {
 		String jsonObj = KMCJsonUtil.toJSon(txi);
 		String jsonObjVar = String.format("jsonObjVar%s", txi.getGuid());
 		JSObject jsObj = JavaScript.ENGINE_MEW.putVariableAndGetJsObj(jsonObjVar, jsonObj);
-		JavaScript.ENGINE_MEW.invokeFunction("signEtherTx", jsObj);
+		JavaScript.ENGINE_MEW.invokeFunction("mew_signEtherTx", jsObj);
+		JavaScript.ENGINE_MEW.freeVariable(jsonObjVar);
 		
 		Calendar cal = Calendar.getInstance();
 		cal.add(Calendar.SECOND, 30);
 		Date expire = cal.getTime();
 		while(true) {
-			Object check = JavaScript.ENGINE_MEW.invokeFunction("resultStorageHas", txi.getGuid());
+			Object check = JavaScript.ENGINE_MEW.invokeFunction("mew_resultStorageHas", txi.getGuid());
 			log.debug(check);
 			if (Boolean.valueOf(String.valueOf(check)) == true) {
 				break;
@@ -58,7 +59,11 @@ public class EthereumBlockChain implements IBlockChain {
 			}
 		}
 
-		String tx = String.valueOf(JavaScript.ENGINE_MEW.invokeFunction("resultStorageGet", txi.getGuid()));
+		String tx = String.valueOf(JavaScript.ENGINE_MEW.invokeFunction("mew_resultStorageGet", txi.getGuid()));
+		try {
+			JavaScript.ENGINE_MEW.invokeFunction("mew_removeResult", txi.getGuid());
+		} catch (Exception e) {
+		}
 		log.debug(tx);
 		EtherSignedTx est = KMCJsonUtil.parse(tx, EtherSignedTx.class);
 		return est == null || est.isIsError() ? null : new EthereumSignedTransaction(txInput.getFrom(), est.getTo(), est.getValue(), est.getRawTx(), est.getSignedTx(), est.getNonce(), est.getGasPrice(), est.getGasLimit(), est.getData());
