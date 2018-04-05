@@ -12,11 +12,16 @@
  *******************************************************************************/
 package com.keepmycoin.blockchain;
 
+import java.util.Date;
+import java.util.Calendar;
+
 import com.keepmycoin.exception.UnlockMethodNotSupportedException;
 import com.keepmycoin.js.JavaScript;
 import com.keepmycoin.js.data.EtherSignedTx;
 import com.keepmycoin.js.data.EtherTxInfo;
 import com.keepmycoin.utils.KMCJsonUtil;
+
+import jdk.nashorn.api.scripting.JSObject;
 
 public class EthereumBlockChain implements IBlockChain {
 	
@@ -33,15 +38,27 @@ public class EthereumBlockChain implements IBlockChain {
 		EtherTxInfo txi = new EtherTxInfo(txInput.getFrom(), txInput.getTo(), txInput.getAmtTransfer(), txInput.getNonce(), txInput.getGWei(), txInput.getGasLimit(), privKeyUnlockMethod.getPrivateKey());
 
 		String jsonObj = KMCJsonUtil.toJSon(txi);
-		JavaScript.ENGINE_MEW.execute("mew.signEtherTx('%s');", jsonObj);
-		String tmp = "has" + txi.getGuid();
-		do {
+		String jsonObjVar = String.format("jsonObjVar%s", txi.getGuid());
+		JSObject jsObj = JavaScript.ENGINE_MEW.putVariableAndGetJsObj(jsonObjVar, jsonObj);
+		JavaScript.ENGINE_MEW.invokeFunction("signEtherTx", jsObj);
+		
+		Calendar cal = Calendar.getInstance();
+		cal.add(Calendar.SECOND, 30);
+		Date expire = cal.getTime();
+		while(true) {
+			Object check = JavaScript.ENGINE_MEW.invokeFunction("resultStorageHas", txi.getGuid());
+			log.debug(check);
+			if (Boolean.valueOf(String.valueOf(check)) == true) {
+				break;
+			}
 			Thread.sleep(50);
 			log.debug("Waiting...");
-		} while(!Boolean.valueOf(JavaScript.ENGINE_MEW.executeAndGetValue("var %s = resultStorage.has('%s');", tmp, tmp, txi.getGuid())));
+			if (new Date().after(expire)) {
+				return null;
+			}
+		}
 
-		String json = "json" + txi.getGuid();
-		String tx = JavaScript.ENGINE_MEW.executeAndGetValue("var %s = resultStorage['%s'];", json, tmp, txi.getGuid());
+		String tx = String.valueOf(JavaScript.ENGINE_MEW.invokeFunction("resultStorageGet", txi.getGuid()));
 		log.debug(tx);
 		EtherSignedTx est = KMCJsonUtil.parse(tx, EtherSignedTx.class);
 		return est == null || est.isIsError() ? null : new EthereumSignedTransaction(txInput.getFrom(), est.getTo(), est.getValue(), est.getRawTx(), est.getSignedTx(), est.getNonce(), est.getGasPrice(), est.getGasLimit(), est.getData());

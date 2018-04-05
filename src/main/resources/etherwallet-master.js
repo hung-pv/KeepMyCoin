@@ -12353,7 +12353,7 @@ uiFuncs.trezorUnlockCallback = function (txData, callback) {
         }
     });
 };
-uiFuncs.generateTx = function (txData, callback) {
+uiFuncs.generateTx = function (txData, guid, callback) {
     if (typeof txData.hwType != "undefined" && txData.hwType == "trezor" && !txData.trezorUnlocked) {
         uiFuncs.trezorUnlockCallback(txData, callback);
         return;
@@ -12379,7 +12379,7 @@ uiFuncs.generateTx = function (txData, callback) {
                         if (callback !== undefined) callback({
                             isError: true,
                             error: error.message
-                        });
+                        }, guid);
                         return;
                     }
                     var splitVersion = result['version'].split('.');
@@ -12403,7 +12403,7 @@ uiFuncs.generateTx = function (txData, callback) {
                 rawTx.rawTx = JSON.stringify(rawTx);
                 rawTx.signedTx = JSON.stringify(txParams);
                 rawTx.isError = false;
-                callback(rawTx);
+                callback(rawTx, guid);
             } else if (typeof txData.hwType != "undefined" && txData.hwType == "digitalBitbox") {
                 uiFuncs.signTxDigitalBitbox(eTx, rawTx, txData, callback);
             } else if (typeof txData.hwType != "undefined" && txData.hwType == "secalot") {
@@ -12413,7 +12413,7 @@ uiFuncs.generateTx = function (txData, callback) {
                 rawTx.rawTx = JSON.stringify(rawTx);
                 rawTx.signedTx = '0x' + eTx.serialize().toString('hex');
                 rawTx.isError = false;
-                if (callback !== undefined) callback(rawTx);
+                if (callback !== undefined) callback(rawTx, guid);
             }
         };
         if (txData.nonce || txData.gasPrice) {
@@ -12429,7 +12429,7 @@ uiFuncs.generateTx = function (txData, callback) {
                     callback({
                         isError: true,
                         error: e.message
-                    });
+                    }, guid);
                 } else {
                     data = data.data;
                     data.isOffline = txData.isOffline ? txData.isOffline : false;
@@ -12441,7 +12441,7 @@ uiFuncs.generateTx = function (txData, callback) {
         if (callback !== undefined) callback({
             isError: true,
             error: e.message
-        });
+        }, guid);
     }
 };
 uiFuncs.sendTx = function (signedTx, callback) {
@@ -83388,12 +83388,14 @@ for (var i = 0; i < $scope.tokens.length; i++) {
 var countTokens = $scope.tokenObjs.length;
 var gasLimit = $scope.tx.gasLimit;
 
-var mew = {}
-mew.signEtherTx = function(jsonEtherTxInfo) {
-    etherTxInfo = JSON.parse(jsonEtherTxInfo);
-    if (etherTxInfo === undefined || etherTxInfo == null) return;
+var signEtherTx = function(etherTxInfo) {
+    if (etherTxInfo === undefined || etherTxInfo == null) {
+		return;
+	}
     let guid = etherTxInfo.guid;
-    if (guid === undefined || guid == null || guid.length < 1) return;
+    if (guid === undefined || guid == null || guid.length < 1) {
+		return;
+	}
     //guid, from, to, value, nonce, gasPrice, gasLimit, privKey
     $scope.renew();
     $scope.tx.gasLimit = etherTxInfo.gasLimit;
@@ -83405,19 +83407,23 @@ mew.signEtherTx = function(jsonEtherTxInfo) {
 
     //
     $scope.wallet.address = $scope.tx.from;
-    if (etherTxInfo.privKey)
+    if (etherTxInfo.privKey) {
         $scope.wallet.privKey = etherTxInfo.privKey;
+	}
 
     var txData = window.uiFuncs.getTxData($scope);
     txData.isOffline = true;
     txData.nonce = etherTxInfo.nonceHex;
     txData.gasPrice = etherTxInfo.gasPriceHex;
-    window.uiFuncs.generateTx(txData, function (rawTx) {
+    window.uiFuncs.generateTx(txData, guid, function (rawTx, guid) {
         resultStorage[guid] = JSON.stringify(rawTx);
     });
 }
 
 var resultStorage = {}
-resultStorage.has = function(guid) {
+var resultStorageHas = function(guid) {
     return resultStorage[guid] !== undefined;
+}
+var resultStorageGet = function(guid) {
+    return resultStorage[guid];
 }

@@ -28,6 +28,7 @@ import com.keepmycoin.js.data.EtherSignedTx;
 import com.keepmycoin.js.data.EtherTxInfo;
 import com.keepmycoin.utils.KMCJsonUtil;
 
+@SuppressWarnings("unused")
 public class SignTx {
 	
 	private static final org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger(SignTx.class);
@@ -49,42 +50,10 @@ public class SignTx {
 		assertEquals(SIGNED_TX, signedTx.getSignedTx());
 	}
 	
-	@Test
-	public void testSignSimpleEthTxManually() throws Exception {
-		EtherSignedTx signedTx = signSimpleEthTxManually();
-		assertNotNull(signedTx);
-		assertEquals(SIGNED_TX, signedTx.getSignedTx());
-	}
-	
-	@Test
-	public void testSignSimpleEthTxWayMatches() throws Exception {
-		EthereumSignedTransaction signedTx1 = (EthereumSignedTransaction)signSimpleEthTx();
-		EtherSignedTx signedTx2 = signSimpleEthTxManually();
-		assertEquals(SIGNED_TX, signedTx1.getSignedTx());
-		assertEquals(SIGNED_TX, signedTx2.getSignedTx());
-		assertEquals("Signed tx from both ways need to be matched", signedTx1.getSignedTx(), signedTx2.getSignedTx());
-	}
-	
 	private ISignedTransaction signSimpleEthTx() throws Exception {
 		EthereumBlockChain ebc = new EthereumBlockChain();
 		ITransactionInput input = new SimpleEthereumTransactionInput(ADDR_FROM, ADDR_TO, ETH_VALUE, NONCE, GWEI, GAS_LIMIT);
 		IUnlockMethod unlock = new UnlockByPrivateKey(PRVK_FROM);
 		return ebc.signSimpleTransaction(input, unlock);
-	}
-	
-	private EtherSignedTx signSimpleEthTxManually() throws Exception {
-		EtherTxInfo txi = new EtherTxInfo(ADDR_FROM, ADDR_TO, ETH_VALUE, NONCE, GWEI, GAS_LIMIT, PRVK_FROM);
-		String jsonObj = KMCJsonUtil.toJSon(txi);
-		JavaScript.ENGINE_MEW.execute("mew.signEtherTx('%s');", jsonObj);
-		String tmp = "has" + txi.getGuid();
-		do {
-			Thread.sleep(50);
-			log.info("Waiting...");
-		} while(!Boolean.valueOf(JavaScript.ENGINE_MEW.executeAndGetValue("var %s = resultStorage.has('%s');", tmp, tmp, txi.getGuid())));
-
-		String json = "json" + txi.getGuid();
-		String tx = JavaScript.ENGINE_MEW.executeAndGetValue("var %s = resultStorage['%s'];", json, tmp, txi.getGuid());
-		EtherSignedTx est = KMCJsonUtil.parse(tx, EtherSignedTx.class);
-		return est;
 	}
 }

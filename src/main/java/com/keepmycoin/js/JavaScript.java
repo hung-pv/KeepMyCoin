@@ -17,6 +17,7 @@ import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
+import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
@@ -24,6 +25,8 @@ import javax.script.ScriptException;
 import org.apache.commons.io.IOUtils;
 
 import com.keepmycoin.utils.KMCJavaScriptUtil;
+
+import jdk.nashorn.api.scripting.JSObject;
 
 public class JavaScript {
 
@@ -81,21 +84,42 @@ public class JavaScript {
 		}
 	}
 	
-	public void execute(CharSequence script, Object...scriptArgs) throws ScriptException {
+	public void putVariable(String name, Object value) {
+		log.trace("putVariable");
+		this.engine.put(name, value);
+	}
+	
+	public JSObject putVariableAndGetJsObj(String name, Object value) throws Exception {
+		log.trace("putVariable");
+		this.putVariable(name, value);
+		return (JSObject)this.execute("JSON.parse(%s);", name);
+	}
+	
+	public Object invokeFunction(String funcName, Object...args) throws Exception {
+		log.trace("invokeFunction");
+		Invocable inv = (Invocable) this.engine;
+		return inv.invokeFunction(funcName, args);
+	}
+	
+	public Object execute(CharSequence script, Object...scriptArgs) throws ScriptException {
 		log.trace("execute");
 		if (scriptArgs.length == 0) {
-			this.engine.eval(script.toString());
+			return this.engine.eval(script.toString());
 		} else {
 			String s = String.format(script.toString(), scriptArgs);
 			log.debug("Script: " + s);
-			this.engine.eval(s);
+			return this.engine.eval(s);
 		}
-		log.trace("after execute");
+	}
+	
+	public Object getVariable(String varName) {
+		log.trace("getVariable");
+		return this.engine.get(varName);
 	}
 	
 	public String getVariableValue(String varName) {
 		log.trace("getVariableValue");
-		return String.valueOf(this.engine.get(varName));
+		return String.valueOf(this.getVariable(varName));
 	}
 	
 	public String executeAndGetValue(CharSequence script, String outputVarName, Object...scriptArgs) throws ScriptException {
