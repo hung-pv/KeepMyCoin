@@ -60,7 +60,7 @@ public class JsEngine {
 		}
 		byte[] dataWithAES = AES.encrypt(data, key);
 		assertArrayEquals(new byte[] { -91, -17, 87, 43, 72, 54, -102, //
-				-126, -67, 93, -40, 21, -2, 106, 34, 95, -4, -18,
+				-126, -67, 93, -40, 21, -2, 106, 34, 95, -4, -18, //
 				73, -80, 68, -71, -98, -17, -1, -49, -93, //
 				-120, -105, -61, 62, 9 }, dataWithAES);
 		byte[] dataToVerify = AES.decrypt(dataWithAES, key);

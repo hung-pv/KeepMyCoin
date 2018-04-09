@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
 
+import com.keepmycoin.App;
 import com.keepmycoin.Configuration;
 import com.keepmycoin.data.AbstractKMCData;
 
@@ -31,6 +32,19 @@ import net.samuelcampos.usbdrivedetector.detectors.AbstractStorageDeviceDetector
 public class KMCFileUtil {
 
 	private static final org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger(KMCFileUtil.class);
+	
+	public static File getCurrentJar() {
+		try {
+			File f = new File(App.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
+			if (f.isDirectory() || !f.getName().endsWith(".jar")) {
+				log.info("Not a JAR file");
+			}
+			return f;
+		} catch (Exception e) {
+			log.error("Error while trying to get current JAR");
+			return null;
+		}
+	}
 
 	public static List<File> getFileRoots() {
 		if (Configuration.DEBUG) {
@@ -62,11 +76,17 @@ public class KMCFileUtil {
 		}
 	}
 
-	public static boolean isFileExt(File file, String ext) {
-		if (file == null || ext == null) {
+	public static boolean isFileExt(File file, String...exts) {
+		if (file == null) {
 			return false;
 		}
-		return file.getName().toLowerCase().endsWith("." + ext.toLowerCase());
+		String name = file.getName().toLowerCase();
+		for (String ext : exts) {
+			if (name.endsWith("." + ext.toLowerCase())) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private static String[] candidateClassNames = new String[] { "KeyStore", "Wallet", "Account", "Note" };
