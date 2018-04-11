@@ -116,16 +116,6 @@ public class KMCInputUtil {
 			o("Mismatch!");
 		}
 	}
-
-	public static int getInt(String ask) {
-		String input = getRawInput(ask);
-		try {
-			return Integer.parseInt(input);
-		} catch (Exception e) {
-			o("NOT a valid number!");
-			return getInt(ask == null ? "Again: " : ask);
-		}
-	}
 	
 	public static String getInput2faPrivateKey() {
 		return  getInput("2fa private key", true, null, new ValidateRegex() {
@@ -201,7 +191,7 @@ public class KMCInputUtil {
 		System.out.println(String.format(pattern, params));
 	}
 
-	public static interface IConvert<TC> {
+	public interface IConvert<TC> {
 		TC convert(String input);
 	}
 }

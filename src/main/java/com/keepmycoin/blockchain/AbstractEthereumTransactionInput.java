@@ -52,7 +52,7 @@ public abstract class AbstractEthereumTransactionInput extends AbstractTransacti
 	}
 
 	public String getData() {
-		return data;
+		return this.data;
 	}
 
 	public void setData(String data) {

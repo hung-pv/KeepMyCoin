@@ -178,7 +178,7 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 		showMsg("Keystore created successfully");
 
 		// Write MEMORIZE
-		saveChecksum(mnemonic, key, pwd);
+		saveChecksum(mnemonic, pwd);
 	}
 
 	@Override
@@ -258,10 +258,10 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 		showMsg("Keystore restored successfully");
 
 		// Write MEMORIZE
-		saveChecksum(mnemonic, key, passPharse);
+		saveChecksum(mnemonic, passPharse);
 	}
 
-	protected void saveChecksum(String mnemonic, byte[] key, String pwd) {
+	protected void saveChecksum(String mnemonic, String pwd) {
 		log.trace("saveChecksum");
 		try {
 			byte[] content = AES.encrypt(KMCStringUtil.getBytes(mnemonic, 256), pwd);

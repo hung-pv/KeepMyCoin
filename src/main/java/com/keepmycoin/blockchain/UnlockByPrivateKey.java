@@ -22,8 +22,4 @@ public class UnlockByPrivateKey implements IUnlockMethod {
 	public String getPrivateKey() {
 		return privateKey;
 	}
-
-	public void setPrivateKey(String privateKey) {
-		this.privateKey = privateKey;
-	}
 }

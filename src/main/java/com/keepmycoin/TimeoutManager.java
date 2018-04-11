@@ -20,7 +20,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class TimeoutManager {
-	public static interface ITimedOutListener {
+	public interface ITimedOutListener {
 		void doNotify();
 	}
 	

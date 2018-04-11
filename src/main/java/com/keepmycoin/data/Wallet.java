@@ -28,7 +28,7 @@ public class Wallet extends AbstractKMCData {
 
 		private String displayText;
 
-		private WalletType(String displayText) {
+		WalletType(String displayText) {
 			this.displayText = displayText;
 		}
 

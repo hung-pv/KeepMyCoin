@@ -17,41 +17,14 @@ import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.FileUtils;
 
-import com.keepmycoin.App;
 import com.keepmycoin.data.AbstractKMCData;
 
 public class KMCFileUtil {
 
 	private static final org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger(KMCFileUtil.class);
 	
-	public static File getCurrentJar() {
-		try {
-			File f = new File(App.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
-			if (f.isDirectory() || !f.getName().endsWith(".jar")) {
-				log.info("Not a JAR file");
-			}
-			return f;
-		} catch (Exception e) {
-			log.error("Error while trying to get current JAR");
-			return null;
-		}
-	}
-	
 	public static boolean isFileExists(File file) {
 		return file != null && file.exists() && file.isFile();
-	}
-
-	public static boolean isFileExt(File file, String...exts) {
-		if (file == null) {
-			return false;
-		}
-		String name = file.getName().toLowerCase();
-		for (String ext : exts) {
-			if (name.endsWith("." + ext.toLowerCase())) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	private static String[] candidateClassNames = new String[] { "KeyStore", "Wallet", "Account", "Note" };

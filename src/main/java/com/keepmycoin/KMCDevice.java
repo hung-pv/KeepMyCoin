@@ -63,10 +63,6 @@ public class KMCDevice {
 		return this.exists() && this.getIdFile().exists();
 	}
 
-	public String getAbsolutePath() {
-		return this.drive == null ? null : this.drive.getAbsolutePath();
-	}
-
 	public File getIdFile() {
 		return this.getFile(ID_FILE_NAME);
 	}

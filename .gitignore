@@ -33,6 +33,9 @@ target/
 # Project
 .classpath
 .project
+KeepMyCoin.iml
+KeepMyCoin.ipr
+KeepMyCoin.iws
 
 # Jrebel
 rebel.xml

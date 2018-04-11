@@ -23,6 +23,6 @@ public class SimpleEthereumTransactionInput extends AbstractEthereumTransactionI
 
 	public SimpleEthereumTransactionInput(String from, String to, double amtEthereumTransfer, int nonce,
 			int gwei, int gasLimit) {
-		super(from, to, amtEthereumTransfer, nonce, new BigInteger(gwei + "000000000", 10), gasLimit, "");
+		this(from, to, amtEthereumTransfer, nonce, new BigInteger(gwei + "000000000", 10), gasLimit);
 	}
 }

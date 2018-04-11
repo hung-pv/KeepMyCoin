@@ -43,10 +43,6 @@ public class KeystoreManager {
 		return FILE_AES_KEYSTORE;
 	}
 
-	public static boolean isKeystoreFileExists() {
-		return FILE_AES_KEYSTORE.exists();
-	}
-
 	public static void save(byte[] keyWithAES, String checkSum) throws Exception {
 		KeyStore ks = new KeyStore();
 		ks.addAdditionalInformation();

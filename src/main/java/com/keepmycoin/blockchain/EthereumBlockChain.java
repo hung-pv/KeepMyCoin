@@ -49,7 +49,7 @@ public class EthereumBlockChain implements IBlockChain {
 		while(true) {
 			Object check = JavaScript.ENGINE_MEW.invokeFunction("mew_resultStorageHas", txi.getGuid());
 			log.debug(check);
-			if (Boolean.valueOf(String.valueOf(check)) == true) {
+			if (Boolean.valueOf(String.valueOf(check))) {
 				break;
 			}
 			Thread.sleep(50);
