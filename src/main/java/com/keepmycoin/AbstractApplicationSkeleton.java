@@ -30,6 +30,7 @@ import com.keepmycoin.data.Wallet.WalletType;
 import com.keepmycoin.utils.KMCArrayUtil;
 import com.keepmycoin.utils.KMCClipboardUtil;
 import com.keepmycoin.utils.KMCFileUtil;
+import com.keepmycoin.utils.KMCJsonUtil;
 import com.keepmycoin.utils.KMCStringUtil;
 
 public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
@@ -288,7 +289,32 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 			showMsg("Illegal call, keystore already exists");
 			System.exit(0);
 		}
-		restoreKeystore_getSeedWordsAndPassPharse();
+		restoreKeystore_selectImportWay();
+	}
+	
+	protected abstract void restoreKeystore_selectImportWay() throws Exception;
+	
+	protected void restoreKeystore_fromLocalPath(File input) throws Exception {
+		log.trace("restoreKeystore_fromLocalPath");
+		if (input.isFile()) {
+			loadKeystore_getPasspharse(input);
+			return;
+		} else if (input.isDirectory()) {
+			File[] files = input.listFiles();
+			for (File file : files) {
+				if (!file.isFile()) continue;
+				try {
+					KeyStore ks = KMCJsonUtil.parseIgnoreError(FileUtils.readFileToString(file, StandardCharsets.UTF_8), KeyStore.class);
+					if (ks != null && ks.isValid()) {
+						loadKeystore_getPasspharse(file);
+						return;
+					}
+				} catch (Exception e) {
+					log.warn("Error file parsing " + file.getAbsolutePath(), e);
+					continue;
+				}
+			}
+		}
 	}
 
 	protected abstract void restoreKeystore_getSeedWordsAndPassPharse() throws Exception;
@@ -348,14 +374,27 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 			log.error("Error while saving checksum", e);
 		}
 	}
+	
+	protected File getAnyKeyStoreFile() {
+		log.trace("getAnyKeyStoreFile");
+		if (!dvc.isValid())
+			return null;
+		File keystore;
+		
+		keystore = KeystoreManager.getKeystoreFile();
+		if (KMCFileUtil.isFileExists(keystore))
+			return keystore;
+		
+		keystore = dvc.getFile(Configuration.KEYSTORE_NAME);
+		if (KMCFileUtil.isFileExists(keystore))
+			return keystore;
+		
+		return null;
+	}
 
 	protected boolean isKeystoreExists() {
 		log.trace("isKeystoreExists");
-		if (!dvc.isValid())
-			return false;
-		if (KeystoreManager.isKeystoreFileExists())
-			return true;
-		return dvc.getFile(Configuration.KEYSTORE_NAME).exists();
+		return getAnyKeyStoreFile() != null;
 	}
 
 	@Override
@@ -364,22 +403,19 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 		if (aes != null) {
 			return;
 		}
-		File fKeystore = KeystoreManager.getKeystoreFile();
-		if (!fKeystore.exists()) {
-			fKeystore = dvc.getFile(Configuration.KEYSTORE_NAME);
-			if (!fKeystore.exists()) {
-				showMsg("Keystore file named '%s' does not exists", KeystoreManager.getKeystoreFile().getName());
-				System.exit(1);
-			}
+		File fKeystore = getAnyKeyStoreFile();
+		if (fKeystore == null) {
+			showMsg("Keystore file named '%s' does not exists", KeystoreManager.getKeystoreFile().getName());
+			System.exit(1);
 		}
-		loadKeystore_getPasspharse();
+		loadKeystore_getPasspharse(fKeystore);
 	}
 
-	protected abstract void loadKeystore_getPasspharse() throws Exception;
+	protected abstract void loadKeystore_getPasspharse(File fKeystore) throws Exception;
 
-	protected void loadKeystore_processUsingPasspharse(String passpharse) throws Exception {
+	protected void loadKeystore_processUsingPasspharse(File fKeystore, String passpharse) throws Exception {
 		log.trace("loadKeystore_processUsingPasspharse");
-		KeyStore ks = KeystoreManager.readKeyStore();
+		KeyStore ks = KeystoreManager.readKeyStore(fKeystore);
 		byte[] keyWithAES = ks.getEncryptedKeyBuffer();
 		String checksumFromFile = StringUtils.trimToNull(ks.getChecksum());
 		byte[] key = AES.decrypt(keyWithAES, passpharse);
@@ -387,11 +423,12 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 			String checksumVerify = KMCArrayUtil.checksumValue(key);
 			if (!checksumVerify.equals(checksumFromFile)) {
 				showMsg("Incorrect passphrase");
-				loadKeystore_getPasspharse();
+				loadKeystore_getPasspharse(fKeystore);
 				return;
 			}
 		}
 		aes = new AES(key);
+		KeystoreManager.cacheFilePath(ks, fKeystore);
 	}
 
 	protected void saveAWallet_saveInfo(String address, String privateKey, WalletType walletType, String mnemonic,

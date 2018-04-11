@@ -181,7 +181,6 @@ public class KMCInputUtil {
 	}
 
 	private static String getMessageWhenInputInvalid(String name, String describle) {
-
 		StringBuilder sb = new StringBuilder();
 		sb.append("Invalid format");
 		if (name != null) {
@@ -193,7 +192,7 @@ public class KMCInputUtil {
 		} else {
 			sb.append(" !!!\n");
 			sb.append(describle);
-			sb.append("\\nPlease try again:");
+			sb.append("\nPlease try again:");
 		}
 		return sb.toString();
 	}

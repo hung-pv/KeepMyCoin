@@ -15,15 +15,30 @@ package com.keepmycoin.data;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import org.apache.commons.lang3.StringUtils;
+
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonSetter;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class KeyStore extends AbstractKMCData {
+	@JsonProperty("guid")
+	private String guid;
 	@JsonProperty("encryptedKey")
 	private String encryptedKey;
 	@JsonProperty("checksum")
 	private String checksum;
+
+	@JsonGetter("guid")
+	public String getGuid() {
+		return this.guid;
+	}
+
+	@JsonSetter("guid")
+	public void setGuid(String guid) {
+		this.guid = guid;
+	}
 
 	@JsonGetter("encryptedKey")
 	public String getEncryptedKey() {
@@ -53,5 +68,10 @@ public class KeyStore extends AbstractKMCData {
 	@JsonIgnore
 	public void setEncryptedKeyBuffer(byte[] encryptedKeyBuffer) {
 		this.encryptedKey = this.encodeBuffer(encryptedKeyBuffer);
+	}
+
+	@JsonIgnore
+	public boolean isValid() {
+		return StringUtils.isNotBlank(this.guid);
 	}
 }

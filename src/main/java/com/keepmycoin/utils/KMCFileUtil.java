@@ -45,6 +45,10 @@ public class KMCFileUtil {
 			return null;
 		}
 	}
+	
+	public static boolean isFileExists(File file) {
+		return file != null && file.exists() && file.isFile();
+	}
 
 	public static List<File> getFileRoots() {
 		if (Configuration.DEBUG) {

@@ -28,6 +28,14 @@ public class KMCJsonUtil {
 		}
 	}
 
+	public static <T> T parseIgnoreError(String content, Class<T> clz) {
+		try {
+			return parse(content, clz);
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
 	public static <T> String toJSon(T obj) {
 		try {
 			return new ObjectMapper().writeValueAsString(obj);

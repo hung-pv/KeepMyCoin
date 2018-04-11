@@ -39,3 +39,5 @@ rebel.xml
 
 kmc.jar
 *.kmc
+build.cmd
+KeyStore.cache

@@ -13,6 +13,7 @@
 package com.keepmycoin;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
@@ -34,16 +35,19 @@ import com.keepmycoin.blockchain.UnlockByPrivateKey;
 import com.keepmycoin.console.MenuManager;
 import com.keepmycoin.data.AbstractKMCData;
 import com.keepmycoin.data.Account;
+import com.keepmycoin.data.KeyStore;
 import com.keepmycoin.data.Wallet;
 import com.keepmycoin.data.Wallet.WalletType;
 import com.keepmycoin.utils.KMCClipboardUtil;
 import com.keepmycoin.utils.KMCFileUtil;
 import com.keepmycoin.utils.KMCInputUtil;
+import com.keepmycoin.utils.KMCJsonUtil;
 import com.keepmycoin.utils.KMCStringUtil;
 import com.keepmycoin.validator.IValidator;
 import com.keepmycoin.validator.ValidateMnemonic;
 import com.keepmycoin.validator.ValidateMustBeDouble;
 import com.keepmycoin.validator.ValidateMustBeInteger;
+import com.keepmycoin.validator.ValidateNormal;
 import com.keepmycoin.validator.ValidateNumberNotNegative;
 import com.keepmycoin.validator.crypto.eth.ValidateEthAddress;
 import com.keepmycoin.validator.crypto.eth.ValidatorEthPrivateKey;
@@ -51,7 +55,7 @@ import com.keepmycoin.validator.crypto.eth.ValidatorEthPrivateKey;
 public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 
 	private static final org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger(KeepMyCoinConsole.class);
-	
+
 	public KeepMyCoinConsole() {
 		Configuration.MODE_CONSOLE = true;
 	}
@@ -152,10 +156,33 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		log.trace("launchMenu");
 		TimeoutManager.renew();
 		MenuManager mm = new MenuManager(this);
+		
+		boolean showKeyStoreMenu = aes == null && !isKeystoreExists();
+		if (showKeyStoreMenu) {
+			List<File> files = KeystoreManager.findExistsKeyStoreFromCachedFilePaths();
+			if (files.size() == 1) {
+				showMsg("Existing keystore detected at '%s'", files.get(0).getAbsolutePath());
+				if (KMCInputUtil.confirm("Load from this file?")) {
+					showKeyStoreMenu = false;
+					loadKeystore_getPasspharse(files.get(0));
+				}
+			} else if (files.size() > 1) {
+				MenuManager mm2 = new MenuManager(this);
+				mm2.add("Skip", null);
+				for (File file : files) {
+					mm2.add(file.getAbsolutePath(), "loadKeystore_getPasspharse", file);
+				}
+				int selection = getMenuSelection(mm2, "Select a keystore file:");
+				if (selection > 1) {
+					showKeyStoreMenu = false;
+					mm2.processSelectedOption(selection);
+				}
+			}
+		}
 
-		if (!isKeystoreExists()) {
-			mm.add("Generate keystore", "generateNewKeystore");
+		if (showKeyStoreMenu) {
 			mm.add("Restore keystore", "restoreKeystore");
+			mm.add("Generate keystore", "generateNewKeystore");
 		} else {
 			mm.add("Sign a transaction", "signTransaction");
 			mm.add("Save a wallet", "saveAWallet");
@@ -199,6 +226,73 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 	}
 
 	@Override
+	protected void restoreKeystore_selectImportWay() throws Exception {
+		log.trace("restoreKeystore_selectImportWay");
+		MenuManager mm = new MenuManager(this);
+		mm.add("Import from file path", "restoreKeystore_getLocalPath");
+		mm.add("Restore from seed and passpharse", "restoreKeystore_getSeedWordsAndPassPharse");
+		mm.processSelectedOption(getMenuSelection(mm, "Action:"));
+	}
+
+	protected void restoreKeystore_getLocalPath() throws Exception {
+		log.trace("restoreKeystore_getLocalPath");
+		showMsg("Path:");
+		File path = KMCInputUtil.getInput("keystore file path", true, new KMCInputUtil.IConvert<File>() {
+			@Override
+			public File convert(String input) {
+				return new File(input);
+			}
+		}, new ValidateNormal<File>() {
+			@Override
+			public String describleWhenInvalid() {
+				return "Must be a valid keystore file or a directory contains keystore file, have read permission";
+			}
+			@Override
+			public boolean isValid(File input) {
+				try {
+					if (input == null) {
+						return false;
+					} else {
+						if (!input.canRead()) {
+							return false;
+						}
+						if (!input.exists()) {
+							return false;
+						} else { // exists
+							if (input.isFile()) {
+								String content = FileUtils.readFileToString(input, StandardCharsets.UTF_8);
+								if (StringUtils.isBlank(content))
+									return false;
+								return KMCJsonUtil.parseIgnoreError(content, KeyStore.class) != null;
+							} else if (input.isDirectory()) {
+								File[] files = input.listFiles();
+								if (files == null) return false;
+								for (File file : files) {
+									if (!file.isFile()) continue;
+									String content = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
+									if (StringUtils.isBlank(content))
+										continue;
+									KeyStore ks = KMCJsonUtil.parseIgnoreError(content, KeyStore.class);
+									if (ks != null && ks.isValid()) return true;
+								}
+								return false;
+							} else {
+								return false;
+							}
+						}
+					}
+				} catch (IOException e) {
+					return false;
+				}
+			}
+		});
+		if (path == null) {
+			return;
+		}
+		restoreKeystore_fromLocalPath(path);
+	}
+
+	@Override
 	protected void restoreKeystore_getSeedWordsAndPassPharse() throws Exception {
 		log.trace("restoreKeystore_getSeedWordsAndPassPharse");
 		showMsg("Enter seed words:");
@@ -229,11 +323,11 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 	}
 
 	@Override
-	protected void loadKeystore_getPasspharse() throws Exception {
+	protected void loadKeystore_getPasspharse(File fKeystore) throws Exception {
 		log.trace("loadKeystore_getPasspharse");
 		String pwd = KMCInputUtil.getPassword_required("Passphrase: ", 1);
 		showMsg("Please wait...");
-		loadKeystore_processUsingPasspharse(pwd);
+		loadKeystore_processUsingPasspharse(fKeystore, pwd);
 	}
 
 	@Override
@@ -272,7 +366,6 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 
 		String address;
 		showMsg("Address (required, will not be encrypted):");
-		
 
 		while (true) {
 			if (wt == WalletType.ERC20) {
@@ -568,8 +661,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 				new ValidateMustBeInteger(), new ValidateNumberNotNegative<Integer>()).intValue();
 
 		showMsg("Amount of ETH to transfer:");
-		double amtEthTransfer = KMCInputUtil.getInput("ETH amount", false,
-				input -> Double.valueOf(input), //
+		double amtEthTransfer = KMCInputUtil.getInput("ETH amount", false, input -> Double.valueOf(input), //
 				new ValidateMustBeDouble(), new ValidateNumberNotNegative<Double>());
 
 		int gasLimit = 21000;
@@ -610,7 +702,8 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 			EthereumSignedTransaction estx = (EthereumSignedTransaction) stx;
 			showMsg("Transfer %s ETH", KMCStringUtil.beautiNumber(estx.getTransferAmt(-18)));
 			showMsg("From %s to %s", estx.getFrom(), estx.getTo());
-			showMsg("Gas price %s gwei, limit %s", KMCStringUtil.beautiNumber(String.valueOf(estx.getGwei())), KMCStringUtil.beautiNumber(String.valueOf(estx.getGasLimit())));
+			showMsg("Gas price %s gwei, limit %s", KMCStringUtil.beautiNumber(String.valueOf(estx.getGwei())),
+					KMCStringUtil.beautiNumber(String.valueOf(estx.getGasLimit())));
 			showMsg("Signed Tx: %s", estx.getSignedTx());
 			KMCClipboardUtil.setText(estx.getSignedTx(), "SignedTX");
 		}
