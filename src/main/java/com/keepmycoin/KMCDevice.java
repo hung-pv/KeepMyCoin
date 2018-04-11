@@ -55,8 +55,12 @@ public class KMCDevice {
 		return result;
 	}
 
+	public boolean exists() {
+		return this.drive != null && this.drive.exists() && this.drive.isDirectory();
+	}
+
 	public boolean isValid() {
-		return this.drive != null && this.drive.exists() && this.drive.isDirectory() && this.getIdFile().exists();
+		return this.exists() && this.getIdFile().exists();
 	}
 
 	public String getAbsolutePath() {

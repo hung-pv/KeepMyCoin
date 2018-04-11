@@ -14,6 +14,7 @@ package com.keepmycoin;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
@@ -38,150 +39,48 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 	private static final org.apache.log4j.Logger log = org.apache.log4j.Logger
 			.getLogger(AbstractApplicationSkeleton.class);
 
-	protected KMCDevice dvc = new KMCDevice(Configuration.KMC_FOLDER);
+	protected KMCDevice dvc = null;
 	protected AES aes = null;
 
 	protected void preLaunch() throws Exception {
 		log.trace("preLaunch");
-		// check KMC device
-		if (!dvc.isValid()) {
-			findKMCDevice();
-			if (!dvc.isValid()) {
-				log.info("Unable to find a valid KMC Device");
-				setupKMCDevice();
-				copyJarToKMCDevice();
+		
+		log.debug("Check device is exists");
+		
+		if (Configuration.KMC_DEVICE == null) {
+			log.debug("KMC device location is null, auto detect from current directory");
+			String userDir = System.getProperty("user.dir");
+			if (StringUtils.isBlank(userDir)) {
+				showMsg("Unable to detect current user directory");
+				System.exit(1);
+			}
+			Configuration.KMC_DEVICE = new File(userDir);
+			if (Configuration.KMC_FOLDER == null) {
+				Configuration.KMC_FOLDER = Paths.get(userDir, Configuration.KMC_FOLDER_DEFAULT).toFile();
 			}
 		}
-
-		setupSessionTimeOut();
-	}
-
-	private static final String[] EXT_IGNORE = new String[] { "cmd", "sh", "jar", Configuration.EXT_DEFAULT };
-
-	protected void findKMCDevice() {
-		log.trace("findKMCDevice");
-		// Detect if device contains jar is KMC device
-		try {
-			File f = new File(this.getClass().getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
-			log.debug("Jar path: " + f.getAbsolutePath());
-			while (f.getParentFile() != null) {
-				File parent = f.getParentFile();
-				if (isValidRootDir(parent, false)) {
-					this.dvc = new KMCDevice(parent);
-					return;
-				} else {
-					f = parent;
-				}
-			}
-		} catch (Exception e) {
-			log.error("Unable to detect", e);
+		this.dvc = new KMCDevice(Configuration.KMC_DEVICE);
+		
+		if (!this.dvc.exists()) {
+			showMsg("Device does not exists");
+			System.exit(1);
 		}
-		// Detect if working dir is KMC device
-		try {
-			File wd = new File(System.getProperty("user.dir"));
-			log.debug("Working dir: " + wd.getAbsolutePath());
-			while (wd.getParentFile() != null) {
-				File parent = wd.getParentFile();
-				if (isValidRootDir(parent, false)) {
-					this.dvc = new KMCDevice(parent);
-					return;
-				} else {
-					wd = parent;
-				}
-			}
-		} catch (Exception e) {
-			log.error("Unable to detect", e);
-		}
-		// Check root dirs
-		List<File> roots = KMCFileUtil.getFileRoots();
-		for (File root : roots) {
-			if (!isValidRootDir(root, true)) {
-				continue;
-			}
-			this.dvc = new KMCDevice(root);
-			log.debug("KMC Device had been set to " + root.getAbsolutePath());
-			return;
-		}
-		this.dvc = new KMCDevice(null);
-	}
-
-	private boolean isValidRootDir(File root, boolean showMsg) {
-		KMCDevice drive = new KMCDevice(root);
-		if (!drive.isValid()) {
-			return false;
-		}
-		try {
-			File[] listOfFiles = root.listFiles();
-			FileOnDevice: for (File file : listOfFiles) {
-				if (file.isDirectory()) {
-					if ("kmc".equalsIgnoreCase(file.getName()) //
-							|| "blind".equalsIgnoreCase(file.getName())//
-							|| file.isHidden()) {
-						continue FileOnDevice;
-					}
-					if (showMsg)
-						showMsg("KMC Device %s should not contains any directory, " //
-								+ "except 'kmc' for application and related files.\n" //
-								+ "SKIP this device", root.getAbsolutePath());
-					return false;
-				} else { // File
-					if (file.getName().equalsIgnoreCase(drive.getIdFile().getName())) {
-						continue;
-					} else if (KMCFileUtil.isFileExt(file, Configuration.EXT)
-							|| KMCFileUtil.isFileExt(file, EXT_IGNORE)) {
-						continue;
-					} else if (file.getName().equalsIgnoreCase(Configuration.KEYSTORE_NAME)) {
-						if (showMsg)
-							showMsg("WARNING: Found keystore file '%s' on your KMC Device\n" + //
-									"You should NOT save it here\n" + //
-									"Push it to cloud storage service like Google Drive, Drop Box, Mediafire,...\n" + //
-									"When need that file, download and save it to your local computer",
-									Configuration.KEYSTORE_NAME);
-						continue;
-					} else {
-						if (showMsg)
-							showMsg("KMC Device '%s' should not contains any file " //
-									+ "except *.%s so this device will be SKIPPED", root.getAbsolutePath(),
-									Configuration.EXT_DEFAULT);
-						return false;
-					}
-				}
-			}
-		} catch (Exception e) {
-			log.error("Error while checking root disk", e);
-			return false;
-		}
-		return true;
-	}
-
-	protected abstract void setupKMCDevice() throws Exception;
-
-	protected void copyJarToKMCDevice() {
-		log.trace("copyJarToKMCDevice");
+		
 		if (!this.dvc.isValid()) {
-			return;
-		}
-		try {
-			File jar = KMCFileUtil.getCurrentJar();
-			if (!jar.getName().endsWith(".jar")) {
-				log.warn("Skip copy JAR to KMC device");
-				return;
+			if (!this.dvc.getIdFile().exists()) {
+				// create is file
+				FileUtils.writeByteArrayToFile(this.dvc.getIdFile(), new byte[0]);
+			} else {
+				throw new RuntimeException("Un-handled case");
 			}
-			File pKMC = this.dvc.getFile("kmc");
-			FileUtils.forceMkdir(pKMC);
-			FileUtils.copyFileToDirectory(jar, pKMC);
-			
-			String[] oses = new String[] { "win", "linux", "mac" };
-			
-			for (String os : oses) {
-				FileUtils.forceMkdir(this.dvc.getFile("kmc", "jre", os));
-				StringBuilder sb = new StringBuilder("./kmc/jre/%s/bin/java");
-				sb.append(" -jar");
-				sb.append(" kmc.jar");
-			}
-		} catch (Exception e) {
-			log.fatal("Unable to copy Jar to KMC Device");
 		}
+		
+		if (Configuration.KMC_FOLDER == null || !Configuration.KMC_FOLDER.exists()) {
+			showMsg("KMC folder does not exists");
+			System.exit(1);
+		}
+		
+		setupSessionTimeOut();
 	}
 
 	protected void setupSessionTimeOut() throws Exception {
@@ -536,6 +435,7 @@ public abstract class AbstractApplicationSkeleton implements IKeepMyCoin {
 	}
 
 	protected void exit() throws Exception {
+		KMCClipboardUtil.clear();
 		System.exit(0);
 	}
 }

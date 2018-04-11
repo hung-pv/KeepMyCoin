@@ -13,6 +13,7 @@
 package com.keepmycoin;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,12 +31,12 @@ public class App {
 		System.out.println(String.format("KMC version: %f", Configuration.APP_VERSION));
 		initialize(args);
 		log.debug("initialize done");
-
+		
 		log.debug("Launch console/interface");
 		IKeepMyCoin kmcProcessor = new KeepMyCoinConsole(); // ? : new KeepMyCoinGUI();
 		kmcProcessor.launch();
 	}
-
+	
 	private static void initialize(String[] args) throws Exception {
 		log.trace("initialize");
 		
@@ -52,20 +53,45 @@ public class App {
 			return;
 		Configuration.DEBUG = larg.contains("debug");
 
-		File fixedKMCFolder = null;
-		if (larg.stream().anyMatch(a -> a.startsWith("kmc="))) {
-			String folder = larg.stream().filter(a -> a.startsWith("kmc=")).findAny().get().split("=")[1];
+		//
+		File fixedKMCDevice = null;
+		if (larg.stream().anyMatch(a -> a.startsWith("device="))) {
+			String folder = larg.stream().filter(a -> a.startsWith("device=")).findAny().get().split("=")[1];
 			if (StringUtils.isNotBlank(folder)) {
-				fixedKMCFolder = new File(folder);
-				if (!fixedKMCFolder.exists()) {
-					fixedKMCFolder = null;
+				fixedKMCDevice = new File(folder);
+				if (!fixedKMCDevice.exists()) {
+					fixedKMCDevice = null;
 				} else {
-					log.info("KMC Device is fixed to " + fixedKMCFolder.getAbsolutePath());
+					log.info("KMC Device is fixed to " + fixedKMCDevice.getAbsolutePath());
 				}
 			}
 		}
-		Configuration.KMC_FOLDER = fixedKMCFolder;
+		Configuration.KMC_DEVICE = fixedKMCDevice;
 
+		//
+		File fixedKMCStorage = null;
+		if (larg.stream().anyMatch(a -> a.startsWith("kmc="))) {
+			String folder = larg.stream().filter(a -> a.startsWith("kmc=")).findAny().get().split("=")[1];
+			if (StringUtils.isNotBlank(folder)) {
+				fixedKMCStorage = new File(folder);
+				if (!fixedKMCStorage.exists()) {
+					fixedKMCStorage = null;
+				} else {
+					log.info("KMC folder is fixed to " + fixedKMCStorage.getAbsolutePath());
+				}
+			}
+		}
+		if (fixedKMCStorage == null && Configuration.KMC_DEVICE != null) {
+			fixedKMCStorage = Paths.get(Configuration.KMC_DEVICE.getAbsolutePath(), Configuration.KMC_FOLDER_DEFAULT).toFile();
+			if (!fixedKMCStorage.exists()) {
+				fixedKMCStorage = null;
+			} else {
+				log.info("KMC folder is fixed to " + fixedKMCStorage.getAbsolutePath());
+			}
+		}
+		Configuration.KMC_FOLDER = fixedKMCStorage;
+
+		//
 		if (larg.stream().anyMatch(a -> a.startsWith("ext="))) {
 			String ext = larg.stream().filter(a -> a.startsWith("ext=")).findAny().get().split("=")[1];
 			if (StringUtils.isNotBlank(ext)) {

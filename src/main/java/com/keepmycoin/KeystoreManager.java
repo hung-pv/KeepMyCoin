@@ -15,6 +15,7 @@ package com.keepmycoin;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,7 +36,7 @@ public class KeystoreManager {
 	
 	private static final org.apache.log4j.Logger log = org.apache.log4j.Logger.getLogger(KeystoreManager.class);
 
-	private static final File FILE_AES_KEYSTORE = new File(Configuration.KEYSTORE_NAME);
+	private static final File FILE_AES_KEYSTORE = Paths.get(Configuration.KMC_FOLDER.getAbsolutePath(), Configuration.KEYSTORE_NAME).toFile();
 	private static final String CACHE_KEYSTORE_FILE_PATH = "KeyStore.cache";
 
 	public static File getKeystoreFile() {
@@ -66,7 +67,6 @@ public class KeystoreManager {
 	
 	public static void cacheFilePath(KeyStore ks, File file) {
 		try {
-			File fCache = new File(CACHE_KEYSTORE_FILE_PATH);
 			final Map<String, Set<String>> map = loadCachedKeyStoreFilePaths();
 			
 			Set<String> paths = map.get(StringUtils.trimToNull(ks.getGuid()));
@@ -85,7 +85,7 @@ public class KeystoreManager {
 					sb.append('\n');
 				}
 			}
-			FileUtils.write(fCache, sb, StandardCharsets.UTF_8);
+			FileUtils.write(getFileCache(), sb, StandardCharsets.UTF_8);
 		}catch (Exception e) {
 			log.error("Error while caching keystore file path", e);
 		}
@@ -117,7 +117,7 @@ public class KeystoreManager {
 	}
 	
 	private static Map<String, Set<String>> loadCachedKeyStoreFilePaths() throws IOException {
-		File fCache = new File(CACHE_KEYSTORE_FILE_PATH);
+		File fCache = getFileCache();
 		final Map<String, Set<String>> map = new HashMap<>();
 		if (fCache.exists()) {
 			// load old data
@@ -138,5 +138,9 @@ public class KeystoreManager {
 			}
 		}
 		return map;
+	}
+	
+	private static File getFileCache() {
+		return Paths.get(Configuration.KMC_FOLDER.getAbsolutePath(), CACHE_KEYSTORE_FILE_PATH).toFile();
 	}
 }

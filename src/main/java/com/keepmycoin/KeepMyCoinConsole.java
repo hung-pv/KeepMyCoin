@@ -15,9 +15,7 @@ package com.keepmycoin;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.NotImplementedException;
@@ -39,7 +37,6 @@ import com.keepmycoin.data.KeyStore;
 import com.keepmycoin.data.Wallet;
 import com.keepmycoin.data.Wallet.WalletType;
 import com.keepmycoin.utils.KMCClipboardUtil;
-import com.keepmycoin.utils.KMCFileUtil;
 import com.keepmycoin.utils.KMCInputUtil;
 import com.keepmycoin.utils.KMCJsonUtil;
 import com.keepmycoin.utils.KMCStringUtil;
@@ -65,84 +62,6 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 		log.trace("preLaunch");
 		log.debug("Console mode");
 		super.preLaunch();
-	}
-
-	@Override
-	protected void setupKMCDevice() throws Exception {
-		log.trace("setupKMCDevice");
-		showMsg("Welcome, today is beautiful to see you :)");
-		showMsg("How to setup:");
-		showMsg(" 1. Prepare a new USB, format it, make sure it already cleared, no file remain");
-		pressEnterToContinue();
-		showMsg(" 2. Plug it in your computer");
-		pressEnterToContinue();
-		showMsg("Now I will list some devices that are detected from your computer");
-		pressEnterToContinue();
-
-		List<File> fValidRoots = KMCFileUtil.getFileRoots().stream().filter(r -> {
-			if (r.listFiles() == null || r.listFiles().length == 0) {
-				return true;
-			}
-			return !Arrays.asList(r.listFiles()).stream().filter(f -> !f.isDirectory()).findFirst().isPresent();
-		}).collect(Collectors.toList());
-		if (!fValidRoots.isEmpty()) {
-			List<File> permissionRestrictedRoots = fValidRoots.stream().filter(r -> !r.canRead() || !r.canWrite())
-					.collect(Collectors.toList());
-			if (!permissionRestrictedRoots.isEmpty()) {
-				showMsg("The following device%s %s currently restricted read / write access",
-						permissionRestrictedRoots.size() > 1 ? "s" : "",
-						permissionRestrictedRoots.size() > 1 ? "are" : "is");
-				for (File root : permissionRestrictedRoots) {
-					String permissionName = null;
-					if (!root.canRead() && !root.canWrite()) {
-						permissionName = "read/write";
-					} else if (!root.canRead()) {
-						permissionName = "read";
-					} else if (!root.canWrite()) {
-						permissionName = "write";
-					}
-					showMsg("%s has restricted %s access", root.getAbsolutePath(), permissionName);
-				}
-				fValidRoots.removeAll(permissionRestrictedRoots);
-			}
-		}
-		if (fValidRoots.isEmpty()) {
-			showMsg("There is no USB device meet conditions, please check again");
-			showMsg("Make sure it is completely EMPTY");
-			showMsg("then run me again");
-			System.exit(0);
-		}
-
-		while (true) {
-			for (int i = 0; i < fValidRoots.size(); i++) {
-				File fValidRoot = fValidRoots.get(i);
-				showMsg("\t%d. %s", i + 1, fValidRoot.getAbsolutePath());
-			}
-			int selection;
-			while (true) {
-				selection = KMCInputUtil.getInt("Select a device: ");
-				if (selection < 1 || selection > fValidRoots.size()) {
-					showMsg("Invalid selection");
-					continue;
-				}
-				break;
-			}
-
-			File selected = fValidRoots.get(selection - 1);
-			if (!KMCInputUtil.confirm(//
-					String.format("Are you sure to select '%s' ?", selected.getAbsolutePath()))) {
-				showMsg("Select again !");
-				continue;
-			}
-
-			this.dvc = new KMCDevice(selected);
-			FileUtils.write(this.dvc.getIdFile(), "", StandardCharsets.UTF_8);
-			showMsg("Setup done, from now on, your usb stick will be called as a 'KMC Device'");
-			showMsg("KMC Device is a short name of KeepMyCoin device");
-			showMsg("Now you can start by pressing Enter");
-			KMCInputUtil.getRawInput(null);
-			break;
-		}
 	}
 
 	@Override

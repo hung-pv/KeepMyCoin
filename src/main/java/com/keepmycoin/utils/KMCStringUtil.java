@@ -12,13 +12,14 @@
  *******************************************************************************/
 package com.keepmycoin.utils;
 
-import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
+import javax.xml.bind.DatatypeConverter;
 
 public class KMCStringUtil {
 
@@ -95,17 +96,11 @@ public class KMCStringUtil {
 	
 	public static String printHexBinary(byte[] arr) {
 		if (arr == null) return null;
-		return new BigInteger(arr).toString(16);
+		return DatatypeConverter.printHexBinary(arr).toLowerCase();
 	}
 	
 	public static byte[] parseHexBinary(String hex) {
 		if (hex == null) return null;
-		byte[] array = new BigInteger(hex, 16).toByteArray();
-		if (array[0] == 0) {
-		    byte[] tmp = new byte[array.length - 1];
-		    System.arraycopy(array, 1, tmp, 0, tmp.length);
-		    array = tmp;
-		}
-		return array;
+		return DatatypeConverter.parseHexBinary(hex);
 	}
 }

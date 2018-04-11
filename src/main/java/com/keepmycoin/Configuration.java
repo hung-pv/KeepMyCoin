@@ -40,7 +40,9 @@ public class Configuration {
 
 	public static boolean DEBUG;
 	public static boolean MODE_CONSOLE = false;
+	public static File KMC_DEVICE;
 	public static File KMC_FOLDER;
+	public static final String KMC_FOLDER_DEFAULT = "kmc";
 	public static final String EXT_DEFAULT = "kmc";
 	public static String EXT = EXT_DEFAULT;
 	public static final String KEYSTORE_NAME = new String(Base64.getDecoder().decode("S0VFUF9USElTX1NBRkUua21j"),
