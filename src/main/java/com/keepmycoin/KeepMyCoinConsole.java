@@ -662,7 +662,7 @@ public class KeepMyCoinConsole extends AbstractApplicationSkeleton {
 			}
 		}
 		showMsg("Thanks for using our production");
-		System.exit(0);
+		super.exit();
 	}
 
 	private int getMenuSelection() {

@@ -21,6 +21,8 @@ import java.util.Date;
 
 import javax.xml.bind.DatatypeConverter;
 
+import com.keepmycoin.validator.ValidateRegex;
+
 public class KMCStringUtil {
 
 	public static byte[] getBytes(String text, int size) {
@@ -83,6 +85,26 @@ public class KMCStringUtil {
 	}
 
 	public static String getDomainName(String url) throws URISyntaxException {
+		ValidateRegex validURLwithProtocol = new ValidateRegex() {
+			@Override
+			public String describleWhenInvalid() {
+				return null;
+			}
+			
+			@Override
+			public String getPattern() {
+				return "\\w+\\:\\/\\/";
+			}
+		};
+		if (!validURLwithProtocol.isValid(url)) {
+			if (url.startsWith(":")) {
+				url = url.substring(1);
+			}
+			if (url.startsWith("//")) {
+				url = url.substring(2);
+			}
+			url = "protocol://" + url;
+		}
 		URI uri = new URI(url);
 		String domain = uri.getHost();
 		return domain.startsWith("www.") ? domain.substring(4) : domain;
